@@ -12,6 +12,11 @@ export default class SongController {
     return await this.songService.getSongInfo({ url });
   }
 
+  @Get('/version')
+  public async getVersion() {
+    return '0.01';
+  }
+
   @Get('/play')
   public async playSong(
     @Query() { videoId },
@@ -51,8 +56,8 @@ export default class SongController {
   }
 
   @Get('/lyrics')
-  public async getLyrics(@Query() { title, artist }){
-    const data = this.songService.getLyrics({ title, artist })
+  public async getLyrics(@Query() { title, artist }) {
+    const data = this.songService.getLyrics({ title, artist });
     return handleHTTPResponse(data);
   }
 }
