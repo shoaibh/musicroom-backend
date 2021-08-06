@@ -23,6 +23,9 @@
     "migrate:all": "yarn run typeorm migration:run",
     "migrate:undo": "yarn run typeorm migration:revert"
   },
+  "engines": {
+    "node": "12.16.3"
+  },
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@nestjs/common": "^7.6.15",
