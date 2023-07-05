@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import {Injectable } from '@nestjs/common';
 import ytdl = require('ytdl-core');
 import HttpResponse from '../libs/http-response';
 import yts = require('yt-search');

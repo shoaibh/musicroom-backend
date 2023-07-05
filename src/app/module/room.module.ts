@@ -4,7 +4,7 @@ import RoomController from '../controllers/room.controller';
 import RoomService from '../services/room.service';
 
 @Module({
-  imports: [AuthGlobalService],
+  imports: [],
   controllers: [RoomController],
   providers: [RoomService],
 })

@@ -46,7 +46,7 @@ export default class RoomService {
   public async getSingleRoom(
     id: number,
   ): Promise<HttpResponse<Partial<RoomEntity>>> {
-    const room: RoomEntity = await RoomEntity.findOne(id);
+    const room: RoomEntity = await RoomEntity.findOne({ where: { id } });
     if (!room) {
       return HttpResponse.notFound(MessagesConst.NO_USER_FOR_THIS_ID);
     }
@@ -54,24 +54,29 @@ export default class RoomService {
   }
 
   public async joinRoom(authDetails, roomId) {
-    const room: RoomEntity = await RoomEntity.findOne({ id: roomId });
+    const room: RoomEntity = await RoomEntity.findOne({
+      where: { id: roomId },
+    });
     room.users = authDetails.currentUser;
     await room.save();
     return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}), 'joined');
   }
 
   public async leaveRoom(authDetails, roomId) {
-    const room: RoomEntity = await RoomEntity.findOne({ id: roomId });
+    const room: RoomEntity = await RoomEntity.findOne({
+      where: { id: roomId },
+    });
     room.users = undefined;
     await room.save();
     return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}), 'joined');
   }
 
-  public async updateSong(roomId, videoId){
-    const room: RoomEntity = await RoomEntity.findOne({id: roomId})
-    room.videoId = videoId
+  public async updateSong(roomId, videoId) {
+    const room: RoomEntity = await RoomEntity.findOne({
+      where: { id: roomId },
+    });
+    room.videoId = videoId;
     await room.save();
     return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}), 'joined');
-
   }
 }

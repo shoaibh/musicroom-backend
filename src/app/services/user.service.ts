@@ -26,11 +26,11 @@ export default class UserService {
     createUserSchema: UserRegistrationDto,
   ): Promise<HttpResponse<Partial<UserEntity>>> {
     try {
-      console.log({createUserSchema})
+      console.log({ createUserSchema });
       const user: UserEntity = await UserEntity.findOne({
         where: { email: createUserSchema.email.toLowerCase() },
       });
-      console.log(user)
+      console.log(user);
       if (user)
         return HttpResponse.error(MessagesConst.EMAIL_ALREADY_REGISTERED, {
           httpCode: 400,
@@ -41,7 +41,7 @@ export default class UserService {
         email,
         passwordHash: Bcrypt.hashSync(password, 10),
       });
-      console.log(newUser)
+      console.log(newUser);
       await newUser.save();
       return HttpResponse.success(
         newUser.toJSON({}),
@@ -49,7 +49,7 @@ export default class UserService {
         201,
       );
     } catch (e) {
-      console.log(e)
+      console.log(e);
       return HttpResponse.error(MessagesConst.SIGN_UP_UNSUCCESSFUL);
     }
   }
@@ -61,13 +61,17 @@ export default class UserService {
       const user: UserEntity = await UserEntity.findOne({
         where: { email: loginCredentialSchema.email.toLowerCase() },
       });
+
       if (!user) return HttpResponse.error(MessagesConst.INVALID_CREDENTIALS);
       const isMatching = await Bcrypt.compare(
         loginCredentialSchema.password,
         user.passwordHash,
       );
+
       if (isMatching) {
         const token = await this.authService.generateJWTToken(user);
+        console.log('==user login', { token });
+
         const res: Partial<UserLoginDto> = {
           ...user.toJSON({}),
           jwt: token,
@@ -102,7 +106,7 @@ export default class UserService {
   }
 
   public async getUser(id: number): Promise<HttpResponse<Partial<UserEntity>>> {
-    const user: UserEntity = await UserEntity.findOne(id);
+    const user: UserEntity = await UserEntity.findOne({ where: { id } });
     if (!user) {
       return HttpResponse.notFound(MessagesConst.NO_USER_FOR_THIS_ID);
     }

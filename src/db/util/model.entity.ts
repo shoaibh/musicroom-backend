@@ -10,7 +10,7 @@ import { validate } from 'class-validator';
 import {
   BeforeInsert,
   BeforeUpdate,
-  FindConditions,
+  FindOptionsWhere,
   FindManyOptions,
 } from 'typeorm/index';
 import moment from 'moment';
@@ -20,12 +20,11 @@ export declare type Diff<
   U extends string | symbol | number,
 > = ({
   [P in T]: P;
-} &
-  {
-    [P in U]: never;
-  } & {
-    [x: string]: never;
-  })[T];
+} & {
+  [P in U]: never;
+} & {
+  [x: string]: never;
+})[T];
 export declare type Omit<T, K extends keyof T> = {
   [P in Diff<keyof T, K>]: T[P];
 };
@@ -104,7 +103,7 @@ export default class ModelEntity<T extends ModelEntity<T>> extends BaseEntity {
 
   public static fetchWithBaseCondition<T>(
     options: FindManyOptions<T>,
-    baseConditions: FindConditions<T>,
+    baseConditions: FindOptionsWhere<T>,
   ): FindManyOptions<T> {
     if (options.where) {
       if (Array.isArray(options.where)) {

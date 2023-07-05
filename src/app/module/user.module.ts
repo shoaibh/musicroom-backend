@@ -4,7 +4,7 @@ import UserService from '../services/user.service';
 import AuthGlobalService from '../services/auth.service';
 
 @Module({
-  imports: [AuthGlobalService],
+  imports: [],
   controllers: [UserController],
   providers: [UserService],
 })

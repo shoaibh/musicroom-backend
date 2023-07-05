@@ -14,6 +14,7 @@ export default class AuthGlobalService {
     const payload = {
       id: user.id,
     };
+    console.log('==', { user });
     return JWT.sign(payload, this.configService.get('JWT_SECRET'), {
       expiresIn: this.configService.get('JWT_EXPIRES_IN'),
     });
