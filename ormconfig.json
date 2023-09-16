@@ -1,0 +1,25 @@
+{
+    "type": "postgres",
+    "host": "127.0.0.1",
+    "port": 5434,
+    "username": "root",
+    "password": "root",
+    "database": "musicroom",
+    "entities": [
+      "/usr/src/eliteopinio/backend/dist/@config/../**/entities/*.entity.{js,ts}"
+    ],
+    "synchronize": false,
+    "migrations": [
+      "src/migrations/*.ts"
+    ],
+    "migrationsTableName": "migrations_TypeORM",
+    "cli": {
+      "migrationsDir": "src/migrations"
+    },
+    "seeds": [
+      "/usr/src/eliteopinio/backend/dist/**/entities/*.seeder.{js,ts}"
+    ],
+    "factories": [
+      "/usr/src/eliteopinio/backend/dist/**/entities/*.factory.{js,ts}"
+    ]
+   }

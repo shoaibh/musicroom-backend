@@ -20,6 +20,7 @@ export default class MessagesConst {
   static USER_DELETED_SUCCESSFULLY = 'user deleted';
   static USER_NOT_DELETED_SUCCESSFULLY = 'user could not be deleted';
   static LOGGED_IN_SUCCESSFULLY = 'log in was successful';
+  static REFRESH_TOKEN_GENERATED = 'refresh token generated';
   static APARTMENT_CREATED_SUCCESSFULLY = 'apartment created successfully';
   static APARTMENT_CREATION_UNSUCCESSFUL = 'apartment could not be created';
   static APARTMENT_REALTOR_NOT_OWNED =

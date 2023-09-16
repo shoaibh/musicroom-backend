@@ -14,9 +14,17 @@ export default class AuthGlobalService {
     const payload = {
       id: user.id,
     };
-    console.log('==', { user });
     return JWT.sign(payload, this.configService.get('JWT_SECRET'), {
       expiresIn: this.configService.get('JWT_EXPIRES_IN'),
+    });
+  }
+
+  public async generateRefreshToken(user: UserEntity) {
+    const payload = {
+      id: user.id,
+    };
+    return JWT.sign(payload, this.configService.get('JWT_REFRESH_TOKEN'), {
+      expiresIn: this.configService.get('JWT_REFRESH_TOKEN_EXPIRES_IN'),
     });
   }
 
@@ -27,6 +35,27 @@ export default class AuthGlobalService {
       const decoded: { id: number } = JWT.verify(
         jwtToken,
         this.configService.get('JWT_SECRET'),
+      );
+      const id = decoded.id;
+      const user = await UserEntity.findOne({ where: { id } });
+      if (!user) {
+        return HttpResponse.error(MessagesConst.INVALID_AUTHENTICATION_TOKEN, {
+          httpCode: 401,
+        });
+      }
+      return HttpResponse.success(user, MessagesConst.USER_AUTHENTICATED, 200);
+    } catch (e) {
+      return HttpResponse.error(e.message, { httpCode: 401 });
+    }
+  }
+
+  public async validateRefreshToken(
+    refreshToken: string,
+  ): Promise<HttpResponse<UserEntity>> {
+    try {
+      const decoded: { id: number } = JWT.verify(
+        refreshToken,
+        this.configService.get('JWT_REFRESH_TOKEN'),
       );
       const id = decoded.id;
       const user = await UserEntity.findOne({ where: { id } });

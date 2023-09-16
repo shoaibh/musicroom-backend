@@ -12,6 +12,12 @@ export default class UserEntity extends ModelEntity<UserEntity> {
   @Column({ name: 'email', unique: true })
   email: string;
 
+  @Column({ name: 'image' })
+  image: string;
+
+  @Column({ name: 'o_auth_id', unique: true })
+  oAuthId: string;
+
   @Column({ name: 'password_hash' })
   passwordHash: string;
 

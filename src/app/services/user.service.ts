@@ -6,6 +6,7 @@ import MessagesConst from '../constants/messages.constants';
 import {
   LoginCredentialDto,
   UserLoginDto,
+  UserOAuthDto,
   UserRegistrationDto,
   UserUpdateDto,
 } from '../dtos/user.dto';
@@ -14,6 +15,8 @@ import * as Bcrypt from 'bcrypt';
 import AuthGlobalService from './auth.service';
 import { AuthDetailsDto } from '../dtos/auth.dto';
 import { isNil } from '@nestjs/common/utils/shared.utils';
+
+const EXPIRE_TIME = 20 * 1000;
 
 @Injectable()
 export default class UserService {
@@ -30,7 +33,6 @@ export default class UserService {
       const user: UserEntity = await UserEntity.findOne({
         where: { email: createUserSchema.email.toLowerCase() },
       });
-      console.log(user);
       if (user)
         return HttpResponse.error(MessagesConst.EMAIL_ALREADY_REGISTERED, {
           httpCode: 400,
@@ -42,6 +44,41 @@ export default class UserService {
         passwordHash: Bcrypt.hashSync(password, 10),
       });
       console.log(newUser);
+      await newUser.save();
+      return HttpResponse.success(
+        newUser.toJSON({}),
+        MessagesConst.SIGN_UP_SUCCESSFUL,
+        201,
+      );
+    } catch (e) {
+      console.log(e);
+      return HttpResponse.error(MessagesConst.SIGN_UP_UNSUCCESSFUL);
+    }
+  }
+
+  public async userOAuth(
+    userOAuthDetail: UserOAuthDto,
+  ): Promise<HttpResponse<Partial<UserEntity>>> {
+    try {
+      const user: UserEntity = await UserEntity.findOne({
+        where: { email: userOAuthDetail.email.toLowerCase() },
+      });
+      console.log(user);
+      if (user)
+        return HttpResponse.success(
+          user.toJSON({}),
+          MessagesConst.LOGIN_SUCCESSFUL,
+          200,
+        );
+      const { name, email, image, oAuthId } = userOAuthDetail;
+
+      const newUser: UserEntity = UserEntity.create({
+        name,
+        email,
+        image,
+        oAuthId,
+      });
+
       await newUser.save();
       return HttpResponse.success(
         newUser.toJSON({}),
@@ -70,11 +107,17 @@ export default class UserService {
 
       if (isMatching) {
         const token = await this.authService.generateJWTToken(user);
-        console.log('==user login', { token });
+        const refreshToken = await this.authService.generateRefreshToken(user);
 
         const res: Partial<UserLoginDto> = {
-          ...user.toJSON({}),
-          jwt: token,
+          user: {
+            ...user.toJSON({}),
+          },
+          backendTokens: {
+            jwt: token,
+            refreshToken,
+            expiresIn: new Date().setTime(new Date().getTime() + EXPIRE_TIME),
+          },
         };
         return HttpResponse.success<Partial<UserLoginDto>>(
           res,
@@ -87,6 +130,25 @@ export default class UserService {
     } catch (e) {
       return HttpResponse.error(MessagesConst.LOGIN_UNSUCCESSFUL);
     }
+  }
+
+  public async refreshUser(user: UserEntity) {
+    const token = await this.authService.generateJWTToken(user);
+    const refreshToken = await this.authService.generateRefreshToken(user);
+
+    const res = {
+      jwt: token,
+      refreshToken,
+      expiresIn: new Date().setTime(new Date().getTime() + EXPIRE_TIME),
+    };
+    return HttpResponse.success<Partial<UserLoginDto>>(
+      {
+        backendTokens: {
+          ...res,
+        },
+      },
+      MessagesConst.REFRESH_TOKEN_GENERATED,
+    );
   }
 
   public async getAllUsers({

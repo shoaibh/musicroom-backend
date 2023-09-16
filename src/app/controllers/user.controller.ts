@@ -9,6 +9,7 @@ import {
   Put,
   Query,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import UserService from '../services/user.service';
 
@@ -17,6 +18,7 @@ import HttpResponse, { handleHTTPResponse } from '../libs/http-response';
 import {
   LoginCredentialDto,
   UserLoginDto,
+  UserOAuthDto,
   UserRegistrationDto,
   UserUpdateDto,
 } from '../dtos/user.dto';
@@ -31,6 +33,7 @@ import {
   UserWithRoleSchema,
 } from '../joi-schema/user.schema';
 import Vp from '../pipes/vp';
+import RefreshGuard from '../guards/refresh.guard';
 
 @Controller('user')
 export default class UserController {
@@ -66,6 +69,14 @@ export default class UserController {
     return handleHTTPResponse(data);
   }
 
+  @Post('/refresh')
+  @HttpCode(200)
+  @UseGuards(RefreshGuard)
+  public async refresh(@Request() req) {
+    const data = await this.userService.refreshUser(req.user);
+    return handleHTTPResponse(data);
+  }
+
   @Post('/logout')
   @HttpCode(200)
   @UseGuards(AuthenticationGuard)
@@ -82,6 +93,15 @@ export default class UserController {
     @Body(Vp.for(UserRegistrationSchema)) user: UserRegistrationDto,
   ): Promise<HttpResponse<Partial<UserEntity>>> {
     const data = await this.userService.userSignUp(user);
+    return handleHTTPResponse(data);
+  }
+
+  @Post('/oauth/signup')
+  @HttpCode(201)
+  public async oAuthSignUp(
+    @Body() user: UserOAuthDto,
+  ): Promise<HttpResponse<Partial<UserEntity>>> {
+    const data = await this.userService.userOAuth(user);
     return handleHTTPResponse(data);
   }
 
