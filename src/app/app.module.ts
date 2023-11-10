@@ -7,7 +7,8 @@ import { AllExceptionFilter } from './interceptors/all-exception.filters';
 import SongModule from './module/song.module';
 import { AppGateway } from './app.gateway';
 import UserModule from './module/user.module';
-import RoomModule from "./module/room.module";
+import RoomModule from './module/room.module';
+import ChatModule from './module/chat.module';
 
 @Module({
   imports: [
@@ -21,13 +22,13 @@ import RoomModule from "./module/room.module";
     UserModule,
     RoomModule,
     SongModule,
+    ChatModule,
   ],
   providers: [
     {
       provide: APP_FILTER,
       useClass: AllExceptionFilter,
     },
-    AppGateway,
   ],
 })
 export class AppModule {}

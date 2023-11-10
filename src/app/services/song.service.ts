@@ -1,4 +1,4 @@
-import {Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import ytdl = require('ytdl-core');
 import HttpResponse from '../libs/http-response';
 import yts = require('yt-search');
@@ -13,7 +13,6 @@ export default class SongService {
       const { thumbnail, author, title } = videoInfo.videoDetails;
       return HttpResponse.success({ thumbnail, author, title, videoId });
     } catch (e) {
-      console.log(e);
       return HttpResponse.notFound();
     }
   }

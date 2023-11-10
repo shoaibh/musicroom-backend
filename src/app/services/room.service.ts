@@ -14,12 +14,14 @@ export default class RoomService {
   ) {}
 
   public async createRoom(
+    authDetails,
     roomData,
   ): Promise<HttpResponse<Partial<RoomEntity>>> {
     try {
       const { name } = roomData;
       const newRoom: RoomEntity = RoomEntity.create({
         name,
+        ownerId: authDetails.currentUser.id,
       });
       await newRoom.save();
       return HttpResponse.success(
@@ -28,14 +30,17 @@ export default class RoomService {
         201,
       );
     } catch (e) {
-      console.log(e);
       return HttpResponse.error(MessagesConst.SIGN_UP_UNSUCCESSFUL);
     }
   }
 
   public async getAllRooms(): Promise<HttpResponse<Partial<RoomEntity>[]>> {
     try {
-      const rooms: RoomEntity[] = await RoomEntity.find();
+      const rooms: RoomEntity[] = await RoomEntity.find({
+        order: {
+          createdAt: 'DESC',
+        },
+      });
       const roomData = rooms.map((room) => room.toJSON({}));
       return HttpResponse.success<Partial<RoomEntity>[]>(roomData);
     } catch (e) {
@@ -57,7 +62,7 @@ export default class RoomService {
     const room: RoomEntity = await RoomEntity.findOne({
       where: { id: roomId },
     });
-    room.users = authDetails.currentUser;
+    room.userIds = [authDetails.currentUser];
     await room.save();
     return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}), 'joined');
   }
@@ -66,16 +71,17 @@ export default class RoomService {
     const room: RoomEntity = await RoomEntity.findOne({
       where: { id: roomId },
     });
-    room.users = undefined;
+    room.userIds = [];
     await room.save();
     return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}), 'joined');
   }
 
-  public async updateSong(roomId, videoId) {
+  public async updateSong(roomId, videoId, currentSong) {
     const room: RoomEntity = await RoomEntity.findOne({
       where: { id: roomId },
     });
     room.videoId = videoId;
+    room.currentSong = currentSong;
     await room.save();
     return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}), 'joined');
   }

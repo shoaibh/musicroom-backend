@@ -48,6 +48,7 @@
     "class-validator": "^0.14.0",
     "dotenv": "^10.0.0",
     "faker": "^5.5.3",
+    "ioredis": "^5.3.2",
     "joi": "^17.9.2",
     "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.21",
@@ -63,6 +64,7 @@
     "sqlite3": "^5.1.6",
     "ts-node": "^10.9.1",
     "tsc-watch": "^6.0.4",
+    "typeorm": "^0.3.17",
     "yt-search": "^2.8.0",
     "ytdl-core": "^4.8.3"
   },

@@ -1,4 +1,4 @@
-import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { BeforeInsert, Column, Entity, OneToMany } from 'typeorm';
 import { ETable } from '../ETable';
 import ModelEntity from '../util/model.entity';
 import { BeforeUpdate } from 'typeorm/index';
@@ -21,12 +21,11 @@ export default class UserEntity extends ModelEntity<UserEntity> {
   @Column({ name: 'password_hash' })
   passwordHash: string;
 
-  @Column({ name: 'room_id', type: 'int' })
-  roomId: number;
+  @Column({ name: 'room_ids',type: 'integer', array: true, default: '{}' })
+  roomIds: number[];
 
-  @ManyToOne(() => RoomEntity, (room) => room.users)
-  @JoinColumn({ name: 'room_id' })
-  public room: Promise<RoomEntity>;
+  @OneToMany(() => RoomEntity, room => room.owner)
+  rooms: Promise<RoomEntity[]>;
 
   @BeforeInsert()
   @BeforeUpdate()

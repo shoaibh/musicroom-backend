@@ -29,8 +29,12 @@ export default class RoomController {
 
   @Post('/create')
   @HttpCode(200)
-  public async login(@Body() roomData) {
-    const data = await this.roomService.createRoom(roomData);
+  @UseGuards(AuthenticationGuard)
+  public async login(
+    @Body() roomData,
+    @AuthDetail() authDetails: AuthDetailsDto,
+  ) {
+    const data = await this.roomService.createRoom(authDetails, roomData);
     return handleHTTPResponse(data);
   }
 
@@ -65,9 +69,13 @@ export default class RoomController {
   @UseGuards(AuthenticationGuard)
   public async updateSong(
     @Param('roomId', Vp.for(IdSchema)) roomId: number,
-    @Body() { videoId },
+    @Body() { videoId, currentSong },
   ) {
-    const data = await this.roomService.updateSong(roomId, videoId);
+    const data = await this.roomService.updateSong(
+      roomId,
+      videoId,
+      currentSong,
+    );
     return handleHTTPResponse(data);
   }
 }

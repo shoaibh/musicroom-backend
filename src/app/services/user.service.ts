@@ -29,7 +29,6 @@ export default class UserService {
     createUserSchema: UserRegistrationDto,
   ): Promise<HttpResponse<Partial<UserEntity>>> {
     try {
-      console.log({ createUserSchema });
       const user: UserEntity = await UserEntity.findOne({
         where: { email: createUserSchema.email.toLowerCase() },
       });
@@ -43,7 +42,6 @@ export default class UserService {
         email,
         passwordHash: Bcrypt.hashSync(password, 10),
       });
-      console.log(newUser);
       await newUser.save();
       return HttpResponse.success(
         newUser.toJSON({}),
@@ -51,7 +49,6 @@ export default class UserService {
         201,
       );
     } catch (e) {
-      console.log(e);
       return HttpResponse.error(MessagesConst.SIGN_UP_UNSUCCESSFUL);
     }
   }
@@ -63,7 +60,6 @@ export default class UserService {
       const user: UserEntity = await UserEntity.findOne({
         where: { email: userOAuthDetail.email.toLowerCase() },
       });
-      console.log(user);
       if (user)
         return HttpResponse.success(
           user.toJSON({}),
@@ -86,7 +82,6 @@ export default class UserService {
         201,
       );
     } catch (e) {
-      console.log(e);
       return HttpResponse.error(MessagesConst.SIGN_UP_UNSUCCESSFUL);
     }
   }
@@ -119,6 +114,7 @@ export default class UserService {
             expiresIn: new Date().setTime(new Date().getTime() + EXPIRE_TIME),
           },
         };
+
         return HttpResponse.success<Partial<UserLoginDto>>(
           res,
           MessagesConst.LOGGED_IN_SUCCESSFULLY,
