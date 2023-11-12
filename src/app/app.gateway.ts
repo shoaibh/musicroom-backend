@@ -15,43 +15,27 @@ export class AppGateway {
   @SubscribeMessage('get-room')
   async handleGetRoom(client: Socket, roomId: string): Promise<void> {
     client.join(roomId);
-    client.emit('load-room', roomId);
+    // client.on('change-song', (delta: any) => {
+    //   client.broadcast.to(roomId).emit('receive-change-song', delta);
+    // });
 
-    client.on('change-song', (delta: any) => {
-      client.broadcast.to(roomId).emit('receive-change-song', delta);
+    client.on('send-message', async (payload: any) => {
+      if (roomId !== payload.roomId) {
+        client.leave(roomId);
+        return;
+      }
+      client.broadcast.to(payload.roomId).emit('receive-message', payload);
+
+      await redis.lpush(
+        `chatMessages-${payload.roomId}`,
+        JSON.stringify(payload),
+      );
     });
   }
 
   @SubscribeMessage('refresh-rooms')
   handleRefreshRooms(client: Socket): void {
-    client.broadcast.emit('refresh');
-  }
-
-  @SubscribeMessage('send-message')
-  async handleMessage(
-    client: any,
-    payload: {
-      roomId: string;
-      sender: {
-        id: Number;
-        name: string;
-        email: string;
-        image: string;
-      };
-      message: string;
-    },
-  ): Promise<void> {
-    // Broadcast the message to all clients
-    this.server.emit('receive-message', payload);
-
-    console.log('==', {
-      payload,
-    });
-    // Store the message in Redis List
-    await redis.lpush(
-      `chatMessages-${payload.roomId}`,
-      JSON.stringify(payload),
-    );
+    this.server.emit('refresh');
   }
 
   async getChatMessages(roomId: string): Promise<any[]> {

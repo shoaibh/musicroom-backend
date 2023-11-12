@@ -66,7 +66,7 @@
     "tsc-watch": "^6.0.4",
     "typeorm": "^0.3.17",
     "yt-search": "^2.8.0",
-    "ytdl-core": "^4.8.3"
+    "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.1.3",
