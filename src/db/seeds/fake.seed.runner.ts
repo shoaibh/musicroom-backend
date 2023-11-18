@@ -6,6 +6,7 @@ import { AppModule } from '../../app/app.module';
 export const fakeUsernames: Array<{ name: string; email: string }> = [
   { name: 'xyz_bitcs', email: 'anas@bitcs.in' },
   { name: 'shoiab_bitcs', email: 'shoaib@bitcs.in' },
+  { name: 'test', email: 'test@gmail.com' },
 ];
 
 export const generateFakeImage = ({
