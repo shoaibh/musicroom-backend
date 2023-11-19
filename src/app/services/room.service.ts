@@ -40,9 +40,12 @@ export default class RoomService {
         order: {
           createdAt: 'DESC',
         },
+        relations: ['owner'],
       });
-      const roomData = rooms.map((room) => room.toJSON({}));
-      return HttpResponse.success<Partial<RoomEntity>[]>(roomData);
+      const roomData = rooms.map((room) => room.toAsyncJSON({}));
+      return HttpResponse.success<Partial<RoomEntity>[]>(
+        await Promise.all(roomData),
+      );
     } catch (e) {
       return HttpResponse.serverError();
     }

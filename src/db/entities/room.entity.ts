@@ -25,13 +25,57 @@ export default class RoomEntity extends ModelEntity<RoomEntity> {
   owner: Promise<UserEntity>;
 
   toJSON({
-    includes = ['id', 'name', 'videoId', 'currentSong', 'createdAt', 'ownerId'],
+    includes = [
+      'id',
+      'name',
+      'videoId',
+      'currentSong',
+      'createdAt',
+      'ownerId',
+      'owner',
+    ],
     skips = [],
   }: {
     includes?: (keyof RoomEntity)[];
     skips?: (keyof RoomEntity)[];
   }): Partial<RoomEntity> {
     const d: any = super.toJSON({ includes, skips });
+
     return d;
+  }
+
+  async toAsyncJSON({
+    includes = [
+      'id',
+      'name',
+      'videoId',
+      'currentSong',
+      'createdAt',
+      'ownerId',
+      'owner',
+    ],
+    skips = [],
+  }: {
+    includes?: (keyof RoomEntity)[];
+    skips?: (keyof RoomEntity)[];
+  }): Promise<Partial<RoomEntity & UserEntity>> {
+    const d: any = super.toJSON({ includes, skips });
+    const resolvedOwner = await this.owner;
+    const ownerDetails = resolvedOwner
+      ? {
+          id: resolvedOwner.id,
+          name: resolvedOwner.name,
+          email: resolvedOwner.email,
+          image: resolvedOwner.image,
+          roomIds: resolvedOwner.roomIds,
+        }
+      : null;
+
+    return {
+      ...d,
+      owner: {
+        ...ownerDetails,
+      },
+    };
   }
 }

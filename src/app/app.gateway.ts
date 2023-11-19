@@ -57,7 +57,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('leave-room')
   handleLeaveRoom(client: Socket, roomId: string): void {
     client.leave(roomId);
-    console.log(`Client ${client.id} left room: ${roomId}`);
+    // console.log(`Client ${client.id} left room: ${roomId}`);
 
     // Update the list of rooms the client is in
     const clientRooms = this.clients.get(client.id) || [];
@@ -68,9 +68,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('send-message')
   async handleSendMessage(client: Socket, payload: any) {
     const { roomId, message } = payload;
-    console.log(
-      `Received message in room ${roomId} from client ${client.id}: ${message}`,
-    );
+    // console.log(
+    //   `Received message in room ${roomId} from client ${client.id}: ${message}`,
+    // );
 
     // Broadcast the message to all clients in the room
     this.server.to(roomId).emit('receive-message', payload);
@@ -104,9 +104,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('play-song')
   async handlePlaySong(client: Socket, payload: any) {
-    console.log(
-      `play song in room ${payload.roomId} from client ${client.id} `,
-    );
+    // console.log(
+    //   `play song in room ${payload.roomId} from client ${client.id} `,
+    // );
 
     // Broadcast the message to all clients in the room
     this.server
@@ -117,15 +117,15 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('get-current-timestamp')
   async getCurrentTimeStamp(client: Socket, payload: any) {
-    console.log(
-      `get cureent timestamp song in room ${payload.roomId} from client ${client.id} `,
-    );
+    // console.log(
+    //   `get cureent timestamp song in room ${payload.roomId} from client ${client.id} `,
+    // );
 
     const response = await this.roomService.getSingleRoom(payload.roomId);
 
     const ownerSocketId = this.userSocketIdMap.get(response.data.ownerId);
 
-    console.log('==', { response, ownerSocketId });
+    // console.log('==', { response, ownerSocketId });
     //
     // Broadcast the message to all clients in the room
     this.server.to(ownerSocketId).emit('check-current-timestamp', {
@@ -135,11 +135,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('send-current-timestamp')
   async sendCurrentTimeStamp(client: Socket, payload: any) {
-    console.log(
-      `get send timestamp song in room ${payload.currentTimeStamp} from client ${client.id} `,
-    );
+    // console.log(
+    //   `get send timestamp song in room ${payload.currentTimeStamp} from client ${client.id} `,
+    // );
 
-    console.log('==', { payload });
+    // console.log('==', { payload });
 
     const memberSocketId = this.userSocketIdMap.get(payload.userId);
 
@@ -153,11 +153,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('seek-song')
   async handleSeekSong(client: Socket, payload: any) {
-    console.log(
-      `seek song in room ${payload.roomId} from client ${client.id} to ${payload.seekTime}`,
-    );
+    // console.log(
+    //   `seek song in room ${payload.roomId} from client ${client.id} to ${payload.seekTime}`,
+    // );
 
-    console.log('==set Room Owner', { payload });
+    // console.log('==set Room Owner', { payload });
     // Include a timestamp when emitting the "seek-song" event
     const timestamp = Date.now();
 
