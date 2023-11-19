@@ -14,6 +14,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
   private clients: Map<string, string[]> = new Map();
+  private joinedClientsInRoom: Map<string, string[]> = new Map();
+
   private roomOwners: Map<string, string> = new Map();
 
   handleConnection(client: Socket): void {
@@ -27,11 +29,24 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private leaveAllRooms(client: Socket): void {
     const rooms = this.clients.get(client.id) || [];
+
+    rooms.forEach((room) => {
+      const clients = this.joinedClientsInRoom.get(room) || [];
+
+      const updatedClients = clients.filter((cl) => cl !== client.id);
+
+      // console.log('after leave', { updatedClients, clie: client.id });
+      this.joinedClientsInRoom.set(room, updatedClients);
+    });
+
     rooms.forEach((room) => {
       client.leave(room);
-      // this.roomOwners.delete(room);
+      // this.roomOwner s.delete(room);
       // console.log(`Client ${client.id} left room: ${room}`);
+      this.roomOwners.set(room, this.joinedClientsInRoom.get(room)[0]);
     });
+
+    // console.log('==', { rooms, l: this.joinedClientsInRoom });
     this.clients.delete(client.id);
   }
 
@@ -45,6 +60,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Store the list of rooms the client is in
     const clientRooms = this.clients.get(client.id) || [];
     this.clients.set(client.id, [...clientRooms, roomId]);
+
+    const joinedClients = this.joinedClientsInRoom.get(roomId) || [];
+    this.joinedClientsInRoom.set(roomId, [...joinedClients, client.id]);
   }
 
   @SubscribeMessage('leave-room')
@@ -89,6 +107,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     //   `pause song in room ${payload.roomId} from client ${client.id} `,
     // );
     // Broadcast the message to all clients in the room
+    this.roomOwners.set(payload.roomId, client.id);
     this.server
       .to(payload.roomId)
       .except(client.id)
@@ -118,7 +137,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const socketId = this.roomOwners.get(payload.roomId);
 
-    console.log('roomOwner', { socketId, owners: this.roomOwners });
+    console.log('roomOwner', { socketId, c: client.id });
     // Broadcast the message to all clients in the room
     this.server.to(socketId).emit('check-current-timestamp', {
       ownerSocketId: socketId,
