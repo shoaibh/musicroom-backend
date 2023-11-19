@@ -7,16 +7,17 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import IORedis from 'ioredis';
+import RoomService from './services/room.service';
 
 const redis = new IORedis();
 @WebSocketGateway({ cors: true })
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  constructor(private readonly roomService: RoomService) {}
+
   @WebSocketServer()
   server: Server;
   private clients: Map<string, string[]> = new Map();
-  private joinedClientsInRoom: Map<string, string[]> = new Map();
-
-  private roomOwners: Map<string, string> = new Map();
+  private userSocketIdMap: Map<number, string> = new Map();
 
   handleConnection(client: Socket): void {
     // console.log(`Client connected: ${client.id}`);
@@ -31,19 +32,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const rooms = this.clients.get(client.id) || [];
 
     rooms.forEach((room) => {
-      const clients = this.joinedClientsInRoom.get(room) || [];
-
-      const updatedClients = clients.filter((cl) => cl !== client.id);
-
-      // console.log('after leave', { updatedClients, clie: client.id });
-      this.joinedClientsInRoom.set(room, updatedClients);
-    });
-
-    rooms.forEach((room) => {
       client.leave(room);
-      // this.roomOwner s.delete(room);
       // console.log(`Client ${client.id} left room: ${room}`);
-      this.roomOwners.set(room, this.joinedClientsInRoom.get(room)[0]);
     });
 
     // console.log('==', { rooms, l: this.joinedClientsInRoom });
@@ -51,7 +41,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('join-room')
-  handleJoinRoom(client: Socket, roomId: string): void {
+  handleJoinRoom(client: Socket, { roomId, userId }): void {
     this.leaveAllRooms(client); // Leave existing rooms before joining a new one
 
     client.join(roomId);
@@ -61,8 +51,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const clientRooms = this.clients.get(client.id) || [];
     this.clients.set(client.id, [...clientRooms, roomId]);
 
-    const joinedClients = this.joinedClientsInRoom.get(roomId) || [];
-    this.joinedClientsInRoom.set(roomId, [...joinedClients, client.id]);
+    this.userSocketIdMap.set(userId, client.id);
   }
 
   @SubscribeMessage('leave-room')
@@ -107,7 +96,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     //   `pause song in room ${payload.roomId} from client ${client.id} `,
     // );
     // Broadcast the message to all clients in the room
-    this.roomOwners.set(payload.roomId, client.id);
     this.server
       .to(payload.roomId)
       .except(client.id)
@@ -119,8 +107,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(
       `play song in room ${payload.roomId} from client ${client.id} `,
     );
-
-    this.roomOwners.set(payload.roomId, client.id);
 
     // Broadcast the message to all clients in the room
     this.server
@@ -135,13 +121,15 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       `get cureent timestamp song in room ${payload.roomId} from client ${client.id} `,
     );
 
-    const socketId = this.roomOwners.get(payload.roomId);
+    const response = await this.roomService.getSingleRoom(payload.roomId);
 
-    console.log('roomOwner', { socketId, c: client.id });
+    const ownerSocketId = this.userSocketIdMap.get(response.data.ownerId);
+
+    console.log('==', { response, ownerSocketId });
+    //
     // Broadcast the message to all clients in the room
-    this.server.to(socketId).emit('check-current-timestamp', {
-      ownerSocketId: socketId,
-      memberSocketId: client.id,
+    this.server.to(ownerSocketId).emit('check-current-timestamp', {
+      userId: payload.userId,
     });
   }
 
@@ -151,11 +139,15 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       `get send timestamp song in room ${payload.currentTimeStamp} from client ${client.id} `,
     );
 
+    console.log('==', { payload });
+
+    const memberSocketId = this.userSocketIdMap.get(payload.userId);
+
     // Broadcast the message to all clients in the room
-    this.server.to(payload.memberSocketId).emit('receive-current-timestamp', {
-      clientId: client.id,
+    this.server.to(memberSocketId).emit('receive-current-timestamp', {
       currentTimeStamp: payload.currentTimeStamp,
       timeStamp: payload.timeStamp,
+      isPlaying: payload.isPlaying,
     });
   }
 
@@ -165,9 +157,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       `seek song in room ${payload.roomId} from client ${client.id} to ${payload.seekTime}`,
     );
 
-    this.roomOwners.set(payload.roomId, client.id);
-
-    console.log('==set Room Owner');
+    console.log('==set Room Owner', { payload });
     // Include a timestamp when emitting the "seek-song" event
     const timestamp = Date.now();
 
@@ -176,6 +166,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       clientId: payload.clientId,
       seekTime: payload.seekTime,
       timestamp,
+      isPlaying: payload.isPlaying,
     });
   }
 
