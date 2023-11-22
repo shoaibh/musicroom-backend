@@ -5,6 +5,7 @@ import MessagesConst from '../constants/messages.constants';
 import ConfigGlobalService from './config.service';
 import AuthGlobalService from './auth.service';
 import RoomEntity from '../../db/entities/room.entity';
+import { AuthDetailsDto } from '../dtos/auth.dto';
 
 @Injectable()
 export default class RoomService {
@@ -34,7 +35,9 @@ export default class RoomService {
     }
   }
 
-  public async getAllRooms(): Promise<HttpResponse<Partial<RoomEntity>[]>> {
+  public async getAllRooms(
+    authDetails: AuthDetailsDto,
+  ): Promise<HttpResponse<Partial<RoomEntity>[]>> {
     try {
       const rooms: RoomEntity[] = await RoomEntity.find({
         order: {
@@ -42,7 +45,22 @@ export default class RoomService {
         },
         relations: ['owner'],
       });
-      const roomData = rooms.map((room) => room.toAsyncJSON({}));
+      const sortedRooms = rooms.sort((a, b) => {
+        const isUserRoomA = a.ownerId === authDetails.currentUser.id;
+        const isUserRoomB = b.ownerId === authDetails.currentUser.id;
+
+        if (isUserRoomA && !isUserRoomB) {
+          return -1; // Room A is owned by the user, should come first
+        } else if (!isUserRoomA && isUserRoomB) {
+          return 1; // Room B is owned by the user, should come first
+        } else {
+          return b.createdAt.getTime() - a.createdAt.getTime();
+          // Sort by createdAt in descending order for other rooms
+        }
+      });
+      const roomData = sortedRooms.map((room) =>
+        room.toAsyncJSON({ userId: authDetails.currentUser.id }),
+      );
       return HttpResponse.success<Partial<RoomEntity>[]>(
         await Promise.all(roomData),
       );

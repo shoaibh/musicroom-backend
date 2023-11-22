@@ -22,8 +22,8 @@ export default class RoomController {
 
   @Get('/')
   @UseGuards(AuthenticationGuard)
-  public async getRooms() {
-    const data = await this.roomService.getAllRooms();
+  public async getRooms(@AuthDetail() authDetails: AuthDetailsDto) {
+    const data = await this.roomService.getAllRooms(authDetails);
     return handleHTTPResponse(data);
   }
 

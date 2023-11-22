@@ -55,9 +55,11 @@ export default class RoomEntity extends ModelEntity<RoomEntity> {
       'owner',
     ],
     skips = [],
+    userId = undefined,
   }: {
     includes?: (keyof RoomEntity)[];
     skips?: (keyof RoomEntity)[];
+    userId?: Number;
   }): Promise<Partial<RoomEntity & UserEntity>> {
     const d: any = super.toJSON({ includes, skips });
     const resolvedOwner = await this.owner;
@@ -68,11 +70,13 @@ export default class RoomEntity extends ModelEntity<RoomEntity> {
           email: resolvedOwner.email,
           image: resolvedOwner.image,
           roomIds: resolvedOwner.roomIds,
+          roomOwned: resolvedOwner.id === userId,
         }
       : null;
 
     return {
       ...d,
+
       owner: {
         ...ownerDetails,
       },
