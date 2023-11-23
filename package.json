@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@hapi/joi": "^17.1.1",
+    "@nestjs-modules/ioredis": "^1.0.1",
     "@nestjs/common": "^10.0.5",
     "@nestjs/core": "^10.0.5",
     "@nestjs/mongoose": "^10.0.0",

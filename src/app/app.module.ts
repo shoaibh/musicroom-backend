@@ -9,6 +9,7 @@ import { AppGateway } from './app.gateway';
 import UserModule from './module/user.module';
 import RoomModule from './module/room.module';
 import ChatModule from './module/chat.module';
+import { RedisModule } from '@nestjs-modules/ioredis';
 
 @Module({
   imports: [
@@ -16,6 +17,14 @@ import ChatModule from './module/chat.module';
       useFactory: (config: ConfigGlobalService) => {
         return config.loadTypeormConnection();
       },
+      inject: [ConfigGlobalService],
+    }),
+    RedisModule.forRootAsync({
+      useFactory: (config: ConfigGlobalService) => ({
+        config: {
+          url: config.get('REDIS_URL'),
+        },
+      }),
       inject: [ConfigGlobalService],
     }),
     GlobalModule,

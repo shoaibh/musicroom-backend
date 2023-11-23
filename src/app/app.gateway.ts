@@ -6,19 +6,15 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import IORedis from 'ioredis';
 import RoomService from './services/room.service';
+import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
 
-const redis = new IORedis({
-  username: process.env.REDIS_USERNAME,
-  port: process.env.REDIS_PORT as unknown as number,
-  password: process.env.REDIS_PASSWORD,
-  host: process.env.REDIS_HOST,
-  maxRetriesPerRequest: 20,
-});
 @WebSocketGateway({ cors: true })
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(private readonly roomService: RoomService) {}
+  constructor(
+    private readonly roomService: RoomService,
+    @InjectRedis() private readonly redis: Redis,
+  ) {}
 
   @WebSocketServer()
   server: Server;
@@ -80,7 +76,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Broadcast the message to all clients in the room
     this.server.to(roomId).emit('receive-message', payload);
-    await redis.lpush(
+    await this.redis.lpush(
       `chatMessages-${payload.roomId}`,
       JSON.stringify(payload),
     );
@@ -183,7 +179,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async getChatMessages(roomId: string): Promise<any[]> {
     // Retrieve chat messages from Redis List
-    const messages = await redis.lrange(`chatMessages-${roomId}`, 0, -1);
+    const messages = await this.redis.lrange(`chatMessages-${roomId}`, 0, -1);
     const parsedMessages = messages.map((message) => {
       const parsedMessage = JSON.parse(message);
       parsedMessage.createdAt = new Date(parsedMessage.createdAt);
