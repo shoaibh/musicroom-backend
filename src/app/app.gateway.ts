@@ -9,7 +9,13 @@ import { Server, Socket } from 'socket.io';
 import IORedis from 'ioredis';
 import RoomService from './services/room.service';
 
-const redis = new IORedis();
+const redis = new IORedis({
+  username: process.env.REDIS_USERNAME,
+  port: process.env.REDIS_PORT as unknown as number,
+  password: process.env.REDIS_PASSWORD,
+  host: process.env.REDIS_HOST,
+  maxRetriesPerRequest: 20,
+});
 @WebSocketGateway({ cors: true })
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(private readonly roomService: RoomService) {}
