@@ -65,6 +65,7 @@
     "ts-node": "^10.9.1",
     "tsc-watch": "^6.0.4",
     "typeorm": "^0.3.17",
+    "typescript": "^5.3.2",
     "yt-search": "^2.8.0",
     "ytdl-core": "^4.11.5"
   },
