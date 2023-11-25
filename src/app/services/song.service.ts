@@ -78,7 +78,11 @@ export default class SongService {
         filter: 'audioonly',
         quality: 'highestaudio',
       });
-      return HttpResponse.success({ ...r, audioUrl: audioFormat?.url });
+      console.log('==', { videoInfo });
+      return HttpResponse.success({
+        ...videoInfo.videoDetails,
+        audioUrl: audioFormat?.url,
+      });
     } catch (e) {
       return HttpResponse.error('No video for this id');
     }
