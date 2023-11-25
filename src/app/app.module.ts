@@ -8,8 +8,8 @@ import SongModule from './module/song.module';
 // import { AppGateway } from './app.gateway';
 import UserModule from './module/user.module';
 import RoomModule from './module/room.module';
-// import ChatModule from './module/chat.module';
-// import { RedisModule } from '@nestjs-modules/ioredis';
+import ChatModule from './module/chat.module';
+import { RedisModule } from '@nestjs-modules/ioredis';
 
 @Module({
   imports: [
@@ -19,19 +19,19 @@ import RoomModule from './module/room.module';
       },
       inject: [ConfigGlobalService],
     }),
-    // RedisModule.forRootAsync({
-    //   useFactory: (config: ConfigGlobalService) => ({
-    //     config: {
-    //       url: config.get('REDIS_URL'),
-    //     },
-    //   }),
-    //   inject: [ConfigGlobalService],
-    // }),
+    RedisModule.forRootAsync({
+      useFactory: (config: ConfigGlobalService) => ({
+        config: {
+          url: config.get('REDIS_URL'),
+        },
+      }),
+      inject: [ConfigGlobalService],
+    }),
     GlobalModule,
     UserModule,
     RoomModule,
     SongModule,
-    // ChatModule,
+    ChatModule,
   ],
   providers: [
     {
