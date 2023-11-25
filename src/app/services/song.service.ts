@@ -71,8 +71,6 @@ export default class SongService {
       if (!isValid) {
         return HttpResponse.notFound();
       }
-      const r = await yts({ videoId: id });
-
       const videoInfo = await ytdl.getInfo(id);
       const audioFormat = ytdl.chooseFormat(videoInfo.formats, {
         filter: 'audioonly',
