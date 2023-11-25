@@ -92,6 +92,7 @@ export default class UserController {
   public async signup(
     @Body(Vp.for(UserRegistrationSchema)) user: UserRegistrationDto,
   ): Promise<HttpResponse<Partial<UserEntity>>> {
+    console.log('==controller', { user });
     const data = await this.userService.userSignUp(user);
     return handleHTTPResponse(data);
   }

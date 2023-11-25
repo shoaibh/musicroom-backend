@@ -25,10 +25,16 @@ class ConfigGlobalService {
     );
     const envReadArr = await envReader.read();
     const envRead = envReadArr[0];
+    console.log('==', { envRead });
+    // const sslOption = envRead.ssl
     const options: TypeOrmModuleOptions = {
       ...envRead,
       entities: [entitiesPath],
       migrations: [],
+      // ssl: true,
+      // ssl: {
+      //   rejectUnauthorized: false,
+      // }
     };
     return options;
   }

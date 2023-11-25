@@ -4,7 +4,7 @@ import * as path from 'path';
 const entitiesPath = path.join(
   __dirname,
   '../',
-  `${process.env.TYPEORM_ENTITIES}`,
+  `db/entities/*.entity{.ts,.js}`,
 );
 
 export const connectionSource = new DataSource({

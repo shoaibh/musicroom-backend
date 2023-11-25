@@ -56,6 +56,7 @@
     "moment": "^2.29.1",
     "mongoose": "^7.3.4",
     "next-auth": "^4.22.3",
+    "os-monitor": "^2.0.3",
     "pg": "^8.11.1",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",

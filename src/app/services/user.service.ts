@@ -37,11 +37,14 @@ export default class UserService {
           httpCode: 400,
         });
       const { name, email, password } = createUserSchema;
+      console.log('==service', { user });
       const newUser: UserEntity = UserEntity.create({
         name,
         email,
         passwordHash: Bcrypt.hashSync(password, 10),
       });
+      console.log('==service', { newUser });
+
       await newUser.save();
       return HttpResponse.success(
         newUser.toJSON({}),

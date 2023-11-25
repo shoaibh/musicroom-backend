@@ -1,194 +1,194 @@
-import {
-  WebSocketGateway,
-  WebSocketServer,
-  SubscribeMessage,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-} from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import RoomService from './services/room.service';
-import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
+// import {
+//   WebSocketGateway,
+//   WebSocketServer,
+//   SubscribeMessage,
+//   OnGatewayConnection,
+//   OnGatewayDisconnect,
+// } from '@nestjs/websockets';
+// import { Server, Socket } from 'socket.io';
+// import RoomService from './services/room.service';
+// import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
 
-@WebSocketGateway({ cors: true })
-export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(
-    private readonly roomService: RoomService,
-    @InjectRedis() private readonly redis: Redis,
-  ) {}
+// @WebSocketGateway({ cors: true })
+// export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
+//   constructor(
+//     private readonly roomService: RoomService,
+//     @InjectRedis() private readonly redis: Redis,
+//   ) {}
 
-  @WebSocketServer()
-  server: Server;
-  private clients: Map<string, string[]> = new Map();
-  private userSocketIdMap: Map<number, string> = new Map();
+//   @WebSocketServer()
+//   server: Server;
+//   private clients: Map<string, string[]> = new Map();
+//   private userSocketIdMap: Map<number, string> = new Map();
 
-  handleConnection(client: Socket): void {
-    // console.log(`Client connected: ${client.id}`);
-  }
+//   handleConnection(client: Socket): void {
+//     // console.log(`Client connected: ${client.id}`);
+//   }
 
-  handleDisconnect(client: Socket): void {
-    // console.log(`Client disconnected: ${client.id}`);
-    this.leaveAllRooms(client);
-  }
+//   handleDisconnect(client: Socket): void {
+//     // console.log(`Client disconnected: ${client.id}`);
+//     this.leaveAllRooms(client);
+//   }
 
-  private leaveAllRooms(client: Socket): void {
-    const rooms = this.clients.get(client.id) || [];
+//   private leaveAllRooms(client: Socket): void {
+//     const rooms = this.clients.get(client.id) || [];
 
-    rooms.forEach((room) => {
-      client.leave(room);
-      // console.log(`Client ${client.id} left room: ${room}`);
-    });
+//     rooms.forEach((room) => {
+//       client.leave(room);
+//       // console.log(`Client ${client.id} left room: ${room}`);
+//     });
 
-    // console.log('==', { rooms, l: this.joinedClientsInRoom });
-    this.clients.delete(client.id);
-  }
+//     // console.log('==', { rooms, l: this.joinedClientsInRoom });
+//     this.clients.delete(client.id);
+//   }
 
-  @SubscribeMessage('join-room')
-  handleJoinRoom(client: Socket, { roomId, userId }): void {
-    this.leaveAllRooms(client); // Leave existing rooms before joining a new one
+//   @SubscribeMessage('join-room')
+//   handleJoinRoom(client: Socket, { roomId, userId }): void {
+//     this.leaveAllRooms(client); // Leave existing rooms before joining a new one
 
-    client.join(roomId);
-    // console.log(`Client ${client.id} joined room: ${roomId}`);
+//     client.join(roomId);
+//     // console.log(`Client ${client.id} joined room: ${roomId}`);
 
-    // Store the list of rooms the client is in
-    const clientRooms = this.clients.get(client.id) || [];
-    this.clients.set(client.id, [...clientRooms, roomId]);
+//     // Store the list of rooms the client is in
+//     const clientRooms = this.clients.get(client.id) || [];
+//     this.clients.set(client.id, [...clientRooms, roomId]);
 
-    this.userSocketIdMap.set(userId, client.id);
-  }
+//     this.userSocketIdMap.set(userId, client.id);
+//   }
 
-  @SubscribeMessage('leave-room')
-  handleLeaveRoom(client: Socket, roomId: string): void {
-    client.leave(roomId);
-    // console.log(`Client ${client.id} left room: ${roomId}`);
+//   @SubscribeMessage('leave-room')
+//   handleLeaveRoom(client: Socket, roomId: string): void {
+//     client.leave(roomId);
+//     // console.log(`Client ${client.id} left room: ${roomId}`);
 
-    // Update the list of rooms the client is in
-    const clientRooms = this.clients.get(client.id) || [];
-    const updatedRooms = clientRooms.filter((room) => room !== roomId);
-    this.clients.set(client.id, updatedRooms);
-  }
+//     // Update the list of rooms the client is in
+//     const clientRooms = this.clients.get(client.id) || [];
+//     const updatedRooms = clientRooms.filter((room) => room !== roomId);
+//     this.clients.set(client.id, updatedRooms);
+//   }
 
-  @SubscribeMessage('send-message')
-  async handleSendMessage(client: Socket, payload: any) {
-    const { roomId, message } = payload;
-    // console.log(
-    //   `Received message in room ${roomId} from client ${client.id}: ${message}`,
-    // );
+//   @SubscribeMessage('send-message')
+//   async handleSendMessage(client: Socket, payload: any) {
+//     const { roomId, message } = payload;
+//     // console.log(
+//     //   `Received message in room ${roomId} from client ${client.id}: ${message}`,
+//     // );
 
-    // Broadcast the message to all clients in the room
-    this.server.to(roomId).emit('receive-message', payload);
-    await this.redis.lpush(
-      `chatMessages-${payload.roomId}`,
-      JSON.stringify(payload),
-    );
-  }
+//     // Broadcast the message to all clients in the room
+//     this.server.to(roomId).emit('receive-message', payload);
+//     await this.redis.lpush(
+//       `chatMessages-${payload.roomId}`,
+//       JSON.stringify(payload),
+//     );
+//   }
 
-  @SubscribeMessage('change-song')
-  async handleChangeSong(client: Socket, payload: any) {
-    // console.log(
-    //   `Received song in room ${payload.roomId} from client ${client.id} `,
-    // );
+//   @SubscribeMessage('change-song')
+//   async handleChangeSong(client: Socket, payload: any) {
+//     // console.log(
+//     //   `Received song in room ${payload.roomId} from client ${client.id} `,
+//     // );
 
-    // Broadcast the message to all clients in the room
-    this.server.to(payload.roomId).emit('receive-change-song', payload);
-  }
+//     // Broadcast the message to all clients in the room
+//     this.server.to(payload.roomId).emit('receive-change-song', payload);
+//   }
 
-  @SubscribeMessage('pause-song')
-  async handlePauseSong(client: Socket, payload: any) {
-    // console.log(
-    //   `pause song in room ${payload.roomId} from client ${client.id} `,
-    // );
-    // Broadcast the message to all clients in the room
-    this.server
-      .to(payload.roomId)
-      .except(client.id)
-      .emit('song-paused', payload.clientId);
-  }
+//   @SubscribeMessage('pause-song')
+//   async handlePauseSong(client: Socket, payload: any) {
+//     // console.log(
+//     //   `pause song in room ${payload.roomId} from client ${client.id} `,
+//     // );
+//     // Broadcast the message to all clients in the room
+//     this.server
+//       .to(payload.roomId)
+//       .except(client.id)
+//       .emit('song-paused', payload.clientId);
+//   }
 
-  @SubscribeMessage('play-song')
-  async handlePlaySong(client: Socket, payload: any) {
-    // console.log(
-    //   `play song in room ${payload.roomId} from client ${client.id} `,
-    // );
+//   @SubscribeMessage('play-song')
+//   async handlePlaySong(client: Socket, payload: any) {
+//     // console.log(
+//     //   `play song in room ${payload.roomId} from client ${client.id} `,
+//     // );
 
-    // Broadcast the message to all clients in the room
-    this.server
-      .to(payload.roomId)
-      .except(client.id)
-      .emit('song-played', payload.clientId);
-  }
+//     // Broadcast the message to all clients in the room
+//     this.server
+//       .to(payload.roomId)
+//       .except(client.id)
+//       .emit('song-played', payload.clientId);
+//   }
 
-  @SubscribeMessage('get-current-timestamp')
-  async getCurrentTimeStamp(client: Socket, payload: any) {
-    // console.log(
-    //   `get cureent timestamp song in room ${payload.roomId} from client ${client.id} `,
-    // );
+//   @SubscribeMessage('get-current-timestamp')
+//   async getCurrentTimeStamp(client: Socket, payload: any) {
+//     // console.log(
+//     //   `get cureent timestamp song in room ${payload.roomId} from client ${client.id} `,
+//     // );
 
-    const response = await this.roomService.getSingleRoom(payload.roomId);
+//     const response = await this.roomService.getSingleRoom(payload.roomId);
 
-    const ownerSocketId = this.userSocketIdMap.get(response.data.ownerId);
+//     const ownerSocketId = this.userSocketIdMap.get(response.data.ownerId);
 
-    // console.log('==', { response, ownerSocketId });
-    //
-    // Broadcast the message to all clients in the room
-    this.server.to(ownerSocketId).emit('check-current-timestamp', {
-      userId: payload.userId,
-    });
-  }
+//     // console.log('==', { response, ownerSocketId });
+//     //
+//     // Broadcast the message to all clients in the room
+//     this.server.to(ownerSocketId).emit('check-current-timestamp', {
+//       userId: payload.userId,
+//     });
+//   }
 
-  @SubscribeMessage('send-current-timestamp')
-  async sendCurrentTimeStamp(client: Socket, payload: any) {
-    // console.log(
-    //   `get send timestamp song in room ${payload.currentTimeStamp} from client ${client.id} `,
-    // );
+//   @SubscribeMessage('send-current-timestamp')
+//   async sendCurrentTimeStamp(client: Socket, payload: any) {
+//     // console.log(
+//     //   `get send timestamp song in room ${payload.currentTimeStamp} from client ${client.id} `,
+//     // );
 
-    // console.log('==', { payload });
+//     // console.log('==', { payload });
 
-    const memberSocketId = this.userSocketIdMap.get(payload.userId);
+//     const memberSocketId = this.userSocketIdMap.get(payload.userId);
 
-    // Broadcast the message to all clients in the room
-    this.server.to(memberSocketId).emit('receive-current-timestamp', {
-      currentTimeStamp: payload.currentTimeStamp,
-      timeStamp: payload.timeStamp,
-      isPlaying: payload.isPlaying,
-    });
-  }
+//     // Broadcast the message to all clients in the room
+//     this.server.to(memberSocketId).emit('receive-current-timestamp', {
+//       currentTimeStamp: payload.currentTimeStamp,
+//       timeStamp: payload.timeStamp,
+//       isPlaying: payload.isPlaying,
+//     });
+//   }
 
-  @SubscribeMessage('seek-song')
-  async handleSeekSong(client: Socket, payload: any) {
-    // console.log(
-    //   `seek song in room ${payload.roomId} from client ${client.id} to ${payload.seekTime}`,
-    // );
+//   @SubscribeMessage('seek-song')
+//   async handleSeekSong(client: Socket, payload: any) {
+//     // console.log(
+//     //   `seek song in room ${payload.roomId} from client ${client.id} to ${payload.seekTime}`,
+//     // );
 
-    // console.log('==set Room Owner', { payload });
-    // Include a timestamp when emitting the "seek-song" event
-    const timestamp = Date.now();
+//     // console.log('==set Room Owner', { payload });
+//     // Include a timestamp when emitting the "seek-song" event
+//     const timestamp = Date.now();
 
-    // Broadcast the seek event to all clients in the room with the timestamp
-    this.server.to(payload.roomId).except(client.id).emit('song-seeked', {
-      clientId: payload.clientId,
-      seekTime: payload.seekTime,
-      timestamp,
-      isPlaying: payload.isPlaying,
-    });
-  }
+//     // Broadcast the seek event to all clients in the room with the timestamp
+//     this.server.to(payload.roomId).except(client.id).emit('song-seeked', {
+//       clientId: payload.clientId,
+//       seekTime: payload.seekTime,
+//       timestamp,
+//       isPlaying: payload.isPlaying,
+//     });
+//   }
 
-  @SubscribeMessage('refresh-rooms')
-  handleRefreshRooms(client: Socket): void {
-    this.server.emit('refresh');
-  }
+//   @SubscribeMessage('refresh-rooms')
+//   handleRefreshRooms(client: Socket): void {
+//     this.server.emit('refresh');
+//   }
 
-  async getChatMessages(roomId: string): Promise<any[]> {
-    // Retrieve chat messages from Redis List
-    const messages = await this.redis.lrange(`chatMessages-${roomId}`, 0, -1);
-    const parsedMessages = messages.map((message) => {
-      const parsedMessage = JSON.parse(message);
-      parsedMessage.createdAt = new Date(parsedMessage.createdAt);
-      return parsedMessage;
-    });
+//   async getChatMessages(roomId: string): Promise<any[]> {
+//     // Retrieve chat messages from Redis List
+//     const messages = await this.redis.lrange(`chatMessages-${roomId}`, 0, -1);
+//     const parsedMessages = messages.map((message) => {
+//       const parsedMessage = JSON.parse(message);
+//       parsedMessage.createdAt = new Date(parsedMessage.createdAt);
+//       return parsedMessage;
+//     });
 
-    const sortedMessages = parsedMessages.sort((a, b) => {
-      return a.createdAt - b.createdAt;
-    });
-    return sortedMessages;
-  }
-}
+//     const sortedMessages = parsedMessages.sort((a, b) => {
+//       return a.createdAt - b.createdAt;
+//     });
+//     return sortedMessages;
+//   }
+// }
