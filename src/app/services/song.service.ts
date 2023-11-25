@@ -17,7 +17,7 @@ export default class SongService {
     }
   }
 
-  public async playSong({ videoId, rangeHeader }) {
+  public async playSong({ videoId }) {
     const isValid = ytdl.validateID(videoId);
     if (!isValid) {
       return HttpResponse.notFound();
@@ -28,33 +28,30 @@ export default class SongService {
       quality: 'highestaudio',
     });
 
-    const { itag, container, contentLength } = audioFormat;
+    // console.log('==', { format: audioFormat });
 
-    const rangePosition = rangeHeader
-      ? rangeHeader.replace(/bytes=/, '').split('-')
-      : null;
+    // const { itag, container, contentLength } = audioFormat;
 
-    const startRange = rangePosition ? parseInt(rangePosition[0], 10) : 0;
-    let endRange: number;
-    if (rangePosition && rangePosition[1].length > 0) {
-      endRange = parseInt(rangePosition[1], 10);
-    } else {
-      // @ts-ignore
-      endRange = contentLength - 1;
-    }
-    const chunksize = endRange - startRange + 1;
-    const range = { start: startRange, end: endRange };
-    const audioStream = ytdl(videoId, {
-      filter: (format) => format.itag === itag,
-      range,
-    });
+    // const rangePosition = rangeHeader
+    //   ? rangeHeader.replace(/bytes=/, '').split('-')
+    //   : null;
+
+    // const startRange = rangePosition ? parseInt(rangePosition[0], 10) : 0;
+    // let endRange: number;
+    // if (rangePosition && rangePosition[1].length > 0) {
+    //   endRange = parseInt(rangePosition[1], 10);
+    // } else {
+    //   // @ts-ignore
+    //   endRange = contentLength - 1;
+    // }
+    // const chunksize = endRange - startRange + 1;
+    // const range = { start: startRange, end: endRange };
+    // const audioStream = ytdl(videoId, {
+    //   filter: (format) => format.itag === itag,
+    //   range,
+    // });
     return HttpResponse.success({
-      container,
-      chunksize,
-      startRange,
-      endRange,
-      contentLength,
-      audioStream,
+      audioUrl: audioFormat?.url,
     });
   }
 
@@ -70,8 +67,18 @@ export default class SongService {
 
   public async searchSongById({ id }) {
     try {
+      const isValid = ytdl.validateID(id);
+      if (!isValid) {
+        return HttpResponse.notFound();
+      }
       const r = await yts({ videoId: id });
-      return HttpResponse.success(r);
+
+      const videoInfo = await ytdl.getInfo(id);
+      const audioFormat = ytdl.chooseFormat(videoInfo.formats, {
+        filter: 'audioonly',
+        quality: 'highestaudio',
+      });
+      return HttpResponse.success({ ...r, audioUrl: audioFormat?.url });
     } catch (e) {
       return HttpResponse.error('No video for this id');
     }

@@ -23,24 +23,20 @@ export default class SongController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    const rangeHeader = request.headers.range || null;
-    const data: any = await this.songService.playSong({ videoId, rangeHeader });
-    const {
-      container,
-      chunksize,
-      startRange,
-      endRange,
-      contentLength,
-      audioStream,
-    } = data.data;
-    response.writeHead(206, {
-      'Content-Type': `audio/${container}`,
-      'Content-Length': chunksize,
-      'Content-Range':
-        'bytes ' + startRange + '-' + endRange + '/' + contentLength,
-      'Accept-Ranges': 'bytes',
-    });
-    audioStream.pipe(response);
+    // const rangeHeader = request.headers.range || null;
+    // console.log('==before');
+    const data: any = await this.songService.playSong({ videoId });
+    // console.log('sdf', { data });
+    const { audioUrl } = data.data;
+    // response.writeHead(206, {
+    //   'Content-Type': `audio/${container}`,
+    //   'Content-Length': chunksize,
+    //   'Content-Range':
+    //     'bytes ' + startRange + '-' + endRange + '/' + contentLength,
+    //   'Accept-Ranges': 'bytes',
+    // });
+    // audioStream.pipe(response);
+    return handleHTTPResponse(data);
   }
 
   @Get('/search')
