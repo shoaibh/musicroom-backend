@@ -98,12 +98,22 @@ export default class RoomService {
   }
 
   public async updateSong(roomId, videoId, currentSong) {
-    const room: RoomEntity = await RoomEntity.findOne({
-      where: { id: roomId },
-    });
-    room.videoId = videoId;
-    room.currentSong = currentSong;
-    await room.save();
-    return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}), 'joined');
+    try {
+      const room: RoomEntity = await RoomEntity.findOne({
+        where: { id: roomId },
+      });
+      if (!room) {
+        return HttpResponse.notFound('no room found');
+      }
+      room.videoId = videoId;
+      room.currentSong = currentSong;
+      await room.save();
+      return HttpResponse.success<Partial<RoomEntity>>(
+        room.toJSON({}),
+        'joined',
+      );
+    } catch (e) {
+      return HttpResponse.error(MessagesConst.SIGN_UP_UNSUCCESSFUL);
+    }
   }
 }
