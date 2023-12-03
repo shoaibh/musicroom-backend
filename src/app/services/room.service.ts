@@ -97,7 +97,7 @@ export default class RoomService {
     return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}), 'joined');
   }
 
-  public async updateSong(roomId, videoId, currentSong) {
+  public async updateSong(roomId, videoId, currentSong, song, authDetails) {
     try {
       const room: RoomEntity = await RoomEntity.findOne({
         where: { id: roomId },
@@ -107,13 +107,28 @@ export default class RoomService {
       }
       room.videoId = videoId;
       room.currentSong = currentSong;
+      if (room?.songQueue?.length > 0) {
+        room.songQueue = [...room.songQueue, song];
+      } else {
+        room.songQueue = [song];
+      }
+
+      room.ownerId = authDetails.currentUser.id;
+
       await room.save();
+
       return HttpResponse.success<Partial<RoomEntity>>(
         room.toJSON({}),
         'joined',
       );
     } catch (e) {
-      return HttpResponse.error(MessagesConst.SIGN_UP_UNSUCCESSFUL);
+      return HttpResponse.error(e);
     }
   }
 }
+
+// const ownerId = room.ownerId;
+
+// console.log('==', { room, song, ownerId });
+// await room.save();
+// room.ownerId = ownerId;

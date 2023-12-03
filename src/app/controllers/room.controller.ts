@@ -69,12 +69,15 @@ export default class RoomController {
   @UseGuards(AuthenticationGuard)
   public async updateSong(
     @Param('roomId', Vp.for(IdSchema)) roomId: number,
-    @Body() { videoId, currentSong },
+    @Body() { videoId, currentSong, song },
+    @AuthDetail() authDetails: AuthDetailsDto,
   ) {
     const data = await this.roomService.updateSong(
       roomId,
       videoId,
       currentSong,
+      song,
+      authDetails,
     );
     return handleHTTPResponse(data);
   }

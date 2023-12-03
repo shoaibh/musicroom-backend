@@ -20,6 +20,20 @@ export default class RoomEntity extends ModelEntity<RoomEntity> {
   @Column({ name: 'user_ids', type: 'integer', array: true, default: '{}' })
   userIds: number[];
 
+  @Column({
+    name: 'song_queue',
+    type: 'text',
+    array: true,
+    nullable: true,
+    // default: "'[]'",
+  })
+  songQueue: {
+    name: string;
+    video_id: string;
+    image_url: string;
+    isPlaying: boolean;
+  }[];
+
   @ManyToOne(() => UserEntity, (user) => user.rooms)
   @JoinColumn({ name: 'owner_id' }) // This specifies the column used for the join
   owner: Promise<UserEntity>;
@@ -33,6 +47,7 @@ export default class RoomEntity extends ModelEntity<RoomEntity> {
       'createdAt',
       'ownerId',
       'owner',
+      'songQueue',
     ],
     skips = [],
   }: {
