@@ -65,7 +65,18 @@ export default class RoomController {
     return handleHTTPResponse(data);
   }
 
-  @Put('/update/:roomId')
+  @Put('/update_queue/:roomId')
+  @UseGuards(AuthenticationGuard)
+  public async updateQueue(
+    @Param('roomId', Vp.for(IdSchema)) roomId: number,
+    @Body() { song },
+    @AuthDetail() authDetails: AuthDetailsDto,
+  ) {
+    const data = await this.roomService.updateQueue(roomId, song, authDetails);
+    return handleHTTPResponse(data);
+  }
+
+  @Put('/update_song/:roomId')
   @UseGuards(AuthenticationGuard)
   public async updateSong(
     @Param('roomId', Vp.for(IdSchema)) roomId: number,
@@ -76,7 +87,6 @@ export default class RoomController {
       roomId,
       videoId,
       currentSong,
-      song,
       authDetails,
     );
     return handleHTTPResponse(data);

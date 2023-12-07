@@ -97,7 +97,34 @@ export default class RoomService {
     return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}), 'joined');
   }
 
-  public async updateSong(roomId, videoId, currentSong, song, authDetails) {
+  public async updateQueue(roomId, song, authDetails) {
+    try {
+      const room: RoomEntity = await RoomEntity.findOne({
+        where: { id: roomId },
+      });
+      if (!room) {
+        return HttpResponse.notFound('no room found');
+      }
+      if (room?.songQueue?.length > 0) {
+        room.songQueue = [...room.songQueue, song];
+      } else {
+        room.songQueue = [song];
+      }
+
+      room.ownerId = authDetails.currentUser.id;
+
+      await room.save();
+
+      return HttpResponse.success<Partial<RoomEntity>>(
+        room.toJSON({}),
+        'joined',
+      );
+    } catch (e) {
+      return HttpResponse.error(e);
+    }
+  }
+
+  public async updateSong(roomId, videoId, currentSong, authDetails) {
     try {
       const room: RoomEntity = await RoomEntity.findOne({
         where: { id: roomId },
@@ -107,11 +134,15 @@ export default class RoomService {
       }
       room.videoId = videoId;
       room.currentSong = currentSong;
-      if (room?.songQueue?.length > 0) {
-        room.songQueue = [...room.songQueue, song];
-      } else {
-        room.songQueue = [song];
-      }
+
+      const updatedSongQueue = room?.songQueue?.map((q) => {
+        if (q.video_id === videoId) {
+          return { ...q, isPlaying: true };
+        }
+        return { ...q, isPlaying: false };
+      });
+
+      room.songQueue = updatedSongQueue;
 
       room.ownerId = authDetails.currentUser.id;
 
