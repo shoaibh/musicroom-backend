@@ -35,6 +35,22 @@ import {
 import Vp from '../pipes/vp';
 import RefreshGuard from '../guards/refresh.guard';
 
+// image.controller.ts
+// import { UploadedFile, UseInterceptors } from '@nestjs/common';
+// import { FileInterceptor } from '@nestjs/platform-express';
+// import * as admin from 'firebase-admin';
+// import * as multer from 'multer';
+// import { editFileName, imageFileFilter } from '../libs/file-upload';
+
+// const serviceAccount = require('../../../musicroom-14adf-firebase-adminsdk-sdk5t-bb2d093c35.json');
+
+// admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount),
+//   storageBucket: 'musicroom-14adf.appspot.com',
+// });
+
+// const bucket = admin.storage().bucket();
+
 @Controller('user')
 export default class UserController {
   constructor(private readonly userService: UserService) {}
@@ -147,4 +163,48 @@ export default class UserController {
     const data = await this.userService.deleteUser(id);
     return handleHTTPResponse(data);
   }
+
+  // @Post('/upload')
+  // @UseInterceptors(
+  //   FileInterceptor('image', {
+  //     storage: multer.memoryStorage(),
+  //     fileFilter: imageFileFilter,
+  //   }),
+  // )
+  // async uploadFile(@UploadedFile() file) {
+  //   console.log(file);
+
+  //   const fileName = editFileName(null, file);
+
+  //   const fileUpload = bucket.file(fileName);
+
+  //   // Create a writable stream and pipe the buffer to it
+  //   const stream = fileUpload.createWriteStream({
+  //     metadata: {
+  //       contentType: file.mimetype,
+  //     },
+  //   });
+
+  //   stream.on('error', (err) => {
+  //     console.error(err);
+  //   });
+
+  //   return new Promise((resolve, reject) => {
+  //     stream.on('finish', async () => {
+  //       console.log('Upload finished successfully');
+
+  //       // Generate a signed URL for the uploaded file
+  //       const [url] = await fileUpload.getSignedUrl({
+  //         action: 'read',
+  //         expires: '01-01-2030', // Adjust the expiration date as needed
+  //       });
+
+  //       // Add your additional logic here, such as storing file metadata in your database
+
+  //       resolve({ filename: fileName, url });
+  //     });
+
+  //     stream.end(file.buffer);
+  //   });
+  // }
 }

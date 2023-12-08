@@ -19,9 +19,9 @@ async function bootstrap() {
     critical1: 0.7, // send alert if free memory drops below this threshold
   });
 
-  osMonitor.on('monitor', (event) => {
-    console.log('Memory Usage:', event);
-  });
+  // osMonitor.on('monitor', (event) => {
+  //   console.log('Memory Usage:', event);
+  // });
 }
 bootstrap()
   .then(() => console.log('Server started'))

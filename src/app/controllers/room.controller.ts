@@ -45,13 +45,23 @@ export default class RoomController {
     return handleHTTPResponse(data);
   }
 
+  @Get('/users/:id')
+  @UseGuards(AuthenticationGuard)
+  public async getRoomUsers(@Param('id', Vp.for(IdSchema)) id: number) {
+    const data = await this.roomService.getRoomUsers(id);
+    return handleHTTPResponse(data);
+  }
+
   @Post('/join/:roomId')
   @UseGuards(AuthenticationGuard)
   public async joinRoom(
     @AuthDetail() authDetails: AuthDetailsDto,
     @Param('roomId', Vp.for(IdSchema)) roomId: number,
   ) {
-    const data = await this.roomService.joinRoom(authDetails, roomId);
+    const data = await this.roomService.joinRoom(
+      authDetails.currentUser.id,
+      roomId,
+    );
     return handleHTTPResponse(data);
   }
 

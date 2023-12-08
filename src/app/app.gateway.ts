@@ -27,6 +27,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket): void {
     // console.log(`Client disconnected: ${client.id}`);
+    // console.log('==left');
+
     this.leaveAllRooms(client);
   }
 
@@ -43,28 +45,46 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('join-room')
-  handleJoinRoom(client: Socket, { roomId, userId }): void {
+  async handleJoinRoom(client: Socket, { roomId, userId }): Promise<void> {
     this.leaveAllRooms(client); // Leave existing rooms before joining a new one
 
     client.join(roomId);
+
+    // console.log('==joined', { roomId, userId });
     // console.log(`Client ${client.id} joined room: ${roomId}`);
 
-    // Store the list of rooms the client is in
-    const clientRooms = this.clients.get(client.id) || [];
-    this.clients.set(client.id, [...clientRooms, roomId]);
+    try {
+      await this.roomService.joinRoom(userId, roomId);
+      const clientRooms = this.clients.get(client.id) || [];
+      this.clients.set(client.id, [...clientRooms, roomId]);
 
-    this.userSocketIdMap.set(userId, client.id);
+      this.userSocketIdMap.set(userId, client.id);
+
+      this.server.to(roomId).except(client.id).emit('user-joined', userId);
+    } catch (e) {
+      console.log(e);
+    }
+    // Store the list of rooms the client is in
   }
 
   @SubscribeMessage('leave-room')
-  handleLeaveRoom(client: Socket, roomId: string): void {
+  async handleLeaveRoom(client: Socket, { roomId, userId }): Promise<void> {
     client.leave(roomId);
     // console.log(`Client ${client.id} left room: ${roomId}`);
-
+    // console.log('==left', { roomId, userId });
     // Update the list of rooms the client is in
-    const clientRooms = this.clients.get(client.id) || [];
-    const updatedRooms = clientRooms.filter((room) => room !== roomId);
-    this.clients.set(client.id, updatedRooms);
+
+    try {
+      await this.roomService.leaveRoom(userId, roomId);
+
+      const clientRooms = this.clients.get(client.id) || [];
+      const updatedRooms = clientRooms.filter((room) => room !== roomId);
+      this.clients.set(client.id, updatedRooms);
+
+      this.server.to(roomId).except(client.id).emit('user-left', userId);
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   @SubscribeMessage('send-message')

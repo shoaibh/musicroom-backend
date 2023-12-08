@@ -6,12 +6,15 @@ import ConfigGlobalService from './config.service';
 import AuthGlobalService from './auth.service';
 import RoomEntity from '../../db/entities/room.entity';
 import { AuthDetailsDto } from '../dtos/auth.dto';
+import UserEntity from 'src/db/entities/user.entity';
+import UserService from './user.service';
 
 @Injectable()
 export default class RoomService {
   constructor(
     private readonly configService: ConfigGlobalService,
     private readonly authService: AuthGlobalService,
+    private readonly userService: UserService,
   ) {}
 
   public async createRoom(
@@ -79,22 +82,70 @@ export default class RoomService {
     return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}));
   }
 
-  public async joinRoom(authDetails, roomId) {
-    const room: RoomEntity = await RoomEntity.findOne({
-      where: { id: roomId },
-    });
-    room.userIds = [authDetails.currentUser];
-    await room.save();
-    return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}), 'joined');
+  public async getRoomUsers(
+    id: number,
+  ): Promise<HttpResponse<Partial<UserEntity>[]>> {
+    const room: RoomEntity = await RoomEntity.findOne({ where: { id } });
+    if (!room) {
+      return HttpResponse.notFound(MessagesConst.NO_USER_FOR_THIS_ID);
+    }
+    return HttpResponse.success<Partial<UserEntity>[]>(
+      room.toJSON({}).joinedUsers,
+    );
   }
 
-  public async leaveRoom(authDetails, roomId) {
-    const room: RoomEntity = await RoomEntity.findOne({
-      where: { id: roomId },
-    });
-    room.userIds = [];
-    await room.save();
-    return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}), 'joined');
+  public async joinRoom(userId, roomId) {
+    try {
+      const room: RoomEntity = await RoomEntity.findOne({
+        where: { id: roomId },
+      });
+      if (!room) {
+        return HttpResponse.notFound('no room found');
+      }
+      const user = await this.userService.getUser(userId);
+
+      let makeUpdate = true;
+      if (room?.joinedUsers?.length > 0) {
+        if (!room.joinedUsers.some((user) => user.id === userId)) {
+          room.joinedUsers = [...room.joinedUsers, user.data];
+        } else {
+          makeUpdate = false;
+        }
+      } else {
+        room.joinedUsers = [user.data];
+      }
+      if (makeUpdate) {
+        await room.save();
+      }
+      return HttpResponse.success<Partial<RoomEntity>>(
+        room.toJSON({}),
+        'joined',
+      );
+    } catch (e) {
+      return HttpResponse.error(e);
+    }
+  }
+
+  public async leaveRoom(userId, roomId) {
+    try {
+      const room: RoomEntity = await RoomEntity.findOne({
+        where: { id: roomId },
+      });
+      if (!room) {
+        return HttpResponse.notFound('no room found');
+      }
+      if (room?.joinedUsers?.length > 0) {
+        const updatedUsers = room.joinedUsers.filter(
+          (user) => user.id !== userId,
+        );
+        room.joinedUsers = updatedUsers;
+        await room.save();
+      }
+
+      return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}), 'left');
+    } catch (e) {
+      return HttpResponse.error(e);
+    }
   }
 
   public async updateQueue(roomId, song, authDetails) {

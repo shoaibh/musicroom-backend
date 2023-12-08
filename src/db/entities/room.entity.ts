@@ -17,8 +17,8 @@ export default class RoomEntity extends ModelEntity<RoomEntity> {
   @Column({ name: 'owner_id' })
   ownerId: number;
 
-  @Column({ name: 'user_ids', type: 'integer', array: true, default: '{}' })
-  userIds: number[];
+  @Column({ name: 'joined_users', type: 'text', array: true, nullable: true })
+  joinedUsers: Partial<UserEntity>[];
 
   @Column({
     name: 'song_queue',
@@ -48,6 +48,7 @@ export default class RoomEntity extends ModelEntity<RoomEntity> {
       'ownerId',
       'owner',
       'songQueue',
+      'joinedUsers',
     ],
     skips = [],
   }: {

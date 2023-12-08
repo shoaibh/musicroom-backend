@@ -32,10 +32,10 @@ export default class AuthGlobalService {
     jwtToken: string,
   ): Promise<HttpResponse<UserEntity>> {
     try {
-      const decoded: { id: number } = JWT.verify(
+      const decoded: JWT.JwtPayload = JWT.verify(
         jwtToken,
         this.configService.get('JWT_SECRET'),
-      );
+      ) as JWT.JwtPayload;
       const id = decoded.id;
       const user = await UserEntity.findOne({ where: { id } });
       if (!user) {
@@ -53,10 +53,10 @@ export default class AuthGlobalService {
     refreshToken: string,
   ): Promise<HttpResponse<UserEntity>> {
     try {
-      const decoded: { id: number } = JWT.verify(
+      const decoded = JWT.verify(
         refreshToken,
         this.configService.get('JWT_REFRESH_TOKEN'),
-      );
+      ) as JWT.JwtPayload;
       const id = decoded.id;
       const user = await UserEntity.findOne({ where: { id } });
       if (!user) {
