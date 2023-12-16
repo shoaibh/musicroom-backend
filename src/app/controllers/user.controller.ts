@@ -99,6 +99,7 @@ export default class UserController {
   public async signup(
     @Body(Vp.for(UserRegistrationSchema)) user: UserRegistrationDto,
   ) {
+    console.log('==', { user });
     const data = await this.userService.userSignUp(user);
     return handleHTTPResponse(data);
   }
@@ -157,7 +158,7 @@ export default class UserController {
   // @Post('/upload')
   // @UseInterceptors(
   //   FileInterceptor('image', {
-  //     storage: multer.memoryStorage(),
+  //     // storage: multer.memoryStorage(),
   //     fileFilter: imageFileFilter,
   //   }),
   // )
@@ -165,6 +166,7 @@ export default class UserController {
   //   console.log(file);
 
   //   const fileName = editFileName(null, file);
+  //   console.log('==', { fileName });
 
   //   // Create a writable stream and pipe the buffer to it
   //   const stream = fileUpload.createWriteStream({

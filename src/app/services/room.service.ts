@@ -165,6 +165,10 @@ export default class RoomService {
         return HttpResponse.notFound('no room found');
       }
 
+      if (String(room.owner) !== String(authDetails.currentUser._id)) {
+        return HttpResponse.notFound('only owners can play song');
+      }
+
       const son = Array.isArray(room?.songQueue)
         ? room?.songQueue?.map((q) => ({
             ...q,

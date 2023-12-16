@@ -38,11 +38,12 @@ export default class UserService {
         return HttpResponse.error(MessagesConst.EMAIL_ALREADY_REGISTERED, {
           httpCode: 400,
         });
-      const { name, email, password } = createUserSchema;
+      const { name, email, password, image_url } = createUserSchema;
       const user = new this.userModel({
         name,
         email,
         passwordHash: Bcrypt.hashSync(password, 10),
+        image: image_url,
       });
       await user.save();
       return HttpResponse.success(user, MessagesConst.SIGN_UP_SUCCESSFUL, 201);
