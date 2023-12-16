@@ -9,24 +9,19 @@ import SongModule from './module/song.module';
 import UserModule from './module/user.module';
 import RoomModule from './module/room.module';
 import ChatModule from './module/chat.module';
-import { RedisModule } from '@nestjs-modules/ioredis';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
-    TypeOrmModule.forRootAsync({
-      useFactory: (config: ConfigGlobalService) => {
-        return config.loadTypeormConnection();
-      },
-      inject: [ConfigGlobalService],
+    MongooseModule.forRoot('mongodb://admin:admin@0.0.0.0:27017/', {
+      dbName: 'musicroom',
     }),
-    RedisModule.forRootAsync({
-      useFactory: (config: ConfigGlobalService) => ({
-        config: {
-          url: config.get('REDIS_URL'),
-        },
-      }),
-      inject: [ConfigGlobalService],
-    }),
+    // MongooseModule.forRootAsync({
+    //   useFactory: (config: ConfigGlobalService) => ({
+    //     uri: config.get('MONGODB_URI'),
+    //   }),
+    //   inject: [ConfigGlobalService],
+    // }),
     GlobalModule,
     UserModule,
     RoomModule,

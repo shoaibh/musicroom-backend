@@ -10,6 +10,8 @@ import {
   Query,
   UseGuards,
   Request,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import UserService from '../services/user.service';
 
@@ -34,22 +36,11 @@ import {
 } from '../joi-schema/user.schema';
 import Vp from '../pipes/vp';
 import RefreshGuard from '../guards/refresh.guard';
+import { editFileName, imageFileFilter } from '../libs/file-upload';
+import { FileInterceptor } from '@nestjs/platform-express';
+import multer from 'multer';
 
 // image.controller.ts
-// import { UploadedFile, UseInterceptors } from '@nestjs/common';
-// import { FileInterceptor } from '@nestjs/platform-express';
-// import * as admin from 'firebase-admin';
-// import * as multer from 'multer';
-// import { editFileName, imageFileFilter } from '../libs/file-upload';
-
-// const serviceAccount = require('../../../musicroom-14adf-firebase-adminsdk-sdk5t-bb2d093c35.json');
-
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount),
-//   storageBucket: 'musicroom-14adf.appspot.com',
-// });
-
-// const bucket = admin.storage().bucket();
 
 @Controller('user')
 export default class UserController {
@@ -107,8 +98,7 @@ export default class UserController {
   @HttpCode(201)
   public async signup(
     @Body(Vp.for(UserRegistrationSchema)) user: UserRegistrationDto,
-  ): Promise<HttpResponse<Partial<UserEntity>>> {
-    console.log('==controller', { user });
+  ) {
     const data = await this.userService.userSignUp(user);
     return handleHTTPResponse(data);
   }
@@ -175,8 +165,6 @@ export default class UserController {
   //   console.log(file);
 
   //   const fileName = editFileName(null, file);
-
-  //   const fileUpload = bucket.file(fileName);
 
   //   // Create a writable stream and pipe the buffer to it
   //   const stream = fileUpload.createWriteStream({

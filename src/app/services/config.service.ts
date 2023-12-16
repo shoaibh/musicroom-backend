@@ -29,6 +29,7 @@ class ConfigGlobalService {
     // const sslOption = envRead.ssl
     const options: TypeOrmModuleOptions = {
       ...envRead,
+      synchronize: true,
       entities: [entitiesPath],
       migrations: [],
       // ssl: true,
@@ -36,7 +37,8 @@ class ConfigGlobalService {
       //   rejectUnauthorized: false,
       // }
     };
-    return options;
+
+    return { ...options, useUnifiedTopology:true, useNewUrlParser:true};
   }
 
   get(key: string): string | undefined {

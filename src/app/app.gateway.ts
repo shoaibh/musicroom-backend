@@ -7,13 +7,16 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import RoomService from './services/room.service';
-import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
+import HttpResponse from './libs/http-response';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Room } from 'src/db/schema/room.schema';
 
 @WebSocketGateway({ cors: true })
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly roomService: RoomService,
-    @InjectRedis() private readonly redis: Redis,
+    @InjectModel('Room') private roomModel: Model<Room>,
   ) {}
 
   @WebSocketServer()
@@ -89,17 +92,31 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('send-message')
   async handleSendMessage(client: Socket, payload: any) {
-    const { roomId, message } = payload;
+    const { roomId, message, sender } = payload;
     // console.log(
     //   `Received message in room ${roomId} from client ${client.id}: ${message}`,
     // );
 
-    // Broadcast the message to all clients in the room
-    this.server.to(roomId).emit('receive-message', payload);
-    await this.redis.lpush(
-      `chatMessages-${payload.roomId}`,
-      JSON.stringify(payload),
+    await this.roomModel.findOneAndUpdate(
+      { _id: roomId },
+      {
+        $push: {
+          messages: {
+            $each: [
+              {
+                message,
+                sender,
+              },
+            ],
+          },
+        },
+      }, // Return the modified document
     );
+
+    // Broadcast the message to all clients in the room
+    this.server
+      .to(roomId)
+      .emit('receive-message', { ...payload, sender: { _id: sender } });
   }
 
   @SubscribeMessage('change-song')
@@ -143,9 +160,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     //   `get cureent timestamp song in room ${payload.roomId} from client ${client.id} `,
     // );
 
-    const response = await this.roomService.getSingleRoom(payload.roomId);
+    const response: HttpResponse<any> = await this.roomService.getSingleRoom(
+      payload.roomId,
+    );
 
-    const ownerSocketId = this.userSocketIdMap.get(response.data.ownerId);
+    const ownerSocketId = this.userSocketIdMap.get(response.data.owner._id);
 
     // console.log('==', { response, ownerSocketId });
     //
@@ -199,16 +218,23 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async getChatMessages(roomId: string): Promise<any[]> {
     // Retrieve chat messages from Redis List
-    const messages = await this.redis.lrange(`chatMessages-${roomId}`, 0, -1);
-    const parsedMessages = messages.map((message) => {
-      const parsedMessage = JSON.parse(message);
-      parsedMessage.createdAt = new Date(parsedMessage.createdAt);
-      return parsedMessage;
-    });
+    const messages = (
+      await this.roomModel
+        .findById(roomId)
+        .populate('messages.sender')
+        .sort({ 'messages.createdAt': 'desc' })
+        .exec()
+    ).messages;
+    // const parsedMessages = messages.map((message) => {
+    //   const parsedMessage = JSON.parse(message);
+    //   parsedMessage.createdAt = new Date(parsedMessage.createdAt);
+    //   return parsedMessage;
+    // });
 
-    const sortedMessages = parsedMessages.sort((a, b) => {
-      return a.createdAt - b.createdAt;
-    });
-    return sortedMessages;
+    // const sortedMessages = parsedMessages.sort((a, b) => {
+    //   return a.createdAt - b.createdAt;
+    // });
+    // return sortedMessages;
+    return messages;
   }
 }

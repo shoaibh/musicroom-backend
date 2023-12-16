@@ -51,9 +51,9 @@ export default class SongController {
     return handleHTTPResponse(data);
   }
 
-  @Get('/lyrics')
-  public async getLyrics(@Query() { title, artist }) {
-    const data = this.songService.getLyrics({ title, artist });
-    return handleHTTPResponse(data);
-  }
+  // @Get('/lyrics')
+  // public async getLyrics(@Query() { title, artist }) {
+  //   const data = this.songService.getLyrics({ title, artist });
+  //   return handleHTTPResponse(data);
+  // }
 }

@@ -8,6 +8,9 @@ import RoomEntity from '../../db/entities/room.entity';
 import { AuthDetailsDto } from '../dtos/auth.dto';
 import UserEntity from 'src/db/entities/user.entity';
 import UserService from './user.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Room } from 'src/db/schema/room.schema';
 
 @Injectable()
 export default class RoomService {
@@ -15,42 +18,34 @@ export default class RoomService {
     private readonly configService: ConfigGlobalService,
     private readonly authService: AuthGlobalService,
     private readonly userService: UserService,
+    @InjectModel('Room') private roomModel: Model<Room>,
   ) {}
 
-  public async createRoom(
-    authDetails,
-    roomData,
-  ): Promise<HttpResponse<Partial<RoomEntity>>> {
+  public async createRoom(authDetails, roomData) {
     try {
       const { name } = roomData;
-      const newRoom: RoomEntity = RoomEntity.create({
+      const room = new this.roomModel({
         name,
-        ownerId: authDetails.currentUser.id,
+        owner: authDetails.currentUser.id,
       });
-      await newRoom.save();
-      return HttpResponse.success(
-        newRoom.toJSON({}),
-        MessagesConst.SIGN_UP_SUCCESSFUL,
-        201,
-      );
+      await room.save();
+      return HttpResponse.success(room, 'room created', 201);
     } catch (e) {
       return HttpResponse.error(MessagesConst.SIGN_UP_UNSUCCESSFUL);
     }
   }
 
-  public async getAllRooms(
-    authDetails: AuthDetailsDto,
-  ): Promise<HttpResponse<Partial<RoomEntity>[]>> {
+  public async getAllRooms(authDetails: AuthDetailsDto) {
     try {
-      const rooms: RoomEntity[] = await RoomEntity.find({
-        order: {
-          createdAt: 'DESC',
-        },
-        relations: ['owner'],
-      });
+      const rooms = await this.roomModel
+        .find()
+        .sort({ createdAt: 'desc' })
+        .populate('owner') // Assuming 'owner' is the field name representing the relationship
+        .exec();
+
       const sortedRooms = rooms.sort((a, b) => {
-        const isUserRoomA = a.ownerId === authDetails.currentUser.id;
-        const isUserRoomB = b.ownerId === authDetails.currentUser.id;
+        const isUserRoomA = a.owner._id === authDetails.currentUser._id;
+        const isUserRoomB = b.owner._id === authDetails.currentUser.id;
 
         if (isUserRoomA && !isUserRoomB) {
           return -1; // Room A is owned by the user, should come first
@@ -61,66 +56,51 @@ export default class RoomService {
           // Sort by createdAt in descending order for other rooms
         }
       });
-      const roomData = sortedRooms.map((room) =>
-        room.toAsyncJSON({ userId: authDetails.currentUser.id }),
-      );
-      return HttpResponse.success<Partial<RoomEntity>[]>(
-        await Promise.all(roomData),
-      );
+      // const roomData = sortedRooms.map((room) =>
+      //   room.toAsyncJSON({ userId: authDetails.currentUser.id }),
+      // );
+      // return HttpResponse.success<Partial<RoomEntity>[]>(
+      //   await Promise.all(roomData),
+      // );
+      return HttpResponse.success(sortedRooms);
     } catch (e) {
+      console.log(e);
       return HttpResponse.serverError();
     }
   }
 
-  public async getSingleRoom(
-    id: number,
-  ): Promise<HttpResponse<Partial<RoomEntity>>> {
-    const room: RoomEntity = await RoomEntity.findOne({ where: { id } });
+  public async getSingleRoom(id: string) {
+    const room = await this.roomModel.findById(id).populate('owner').exec();
     if (!room) {
       return HttpResponse.notFound(MessagesConst.NO_USER_FOR_THIS_ID);
     }
-    return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}));
+    return HttpResponse.success(room);
   }
 
-  public async getRoomUsers(
-    id: number,
-  ): Promise<HttpResponse<Partial<UserEntity>[]>> {
-    const room: RoomEntity = await RoomEntity.findOne({ where: { id } });
+  public async getRoomUsers(id: string) {
+    const room = await this.roomModel
+      .findById(id)
+      .populate('joinedUsers.user')
+      .exec();
     if (!room) {
       return HttpResponse.notFound(MessagesConst.NO_USER_FOR_THIS_ID);
     }
-    return HttpResponse.success<Partial<UserEntity>[]>(
-      room.toJSON({}).joinedUsers,
-    );
+    return HttpResponse.success(room.joinedUsers);
   }
 
   public async joinRoom(userId, roomId) {
     try {
-      const room: RoomEntity = await RoomEntity.findOne({
-        where: { id: roomId },
-      });
+      const room = await this.roomModel
+        .findByIdAndUpdate(
+          roomId,
+          { $addToSet: { joinedUsers: { user: userId } } },
+          { new: true },
+        )
+        .exec();
       if (!room) {
         return HttpResponse.notFound('no room found');
       }
-      const user = await this.userService.getUser(userId);
-
-      let makeUpdate = true;
-      if (room?.joinedUsers?.length > 0) {
-        if (!room.joinedUsers.some((user) => user.id === userId)) {
-          room.joinedUsers = [...room.joinedUsers, user.data];
-        } else {
-          makeUpdate = false;
-        }
-      } else {
-        room.joinedUsers = [user.data];
-      }
-      if (makeUpdate) {
-        await room.save();
-      }
-      return HttpResponse.success<Partial<RoomEntity>>(
-        room.toJSON({}),
-        'joined',
-      );
+      return HttpResponse.success(room, 'joined');
     } catch (e) {
       return HttpResponse.error(e);
     }
@@ -128,21 +108,18 @@ export default class RoomService {
 
   public async leaveRoom(userId, roomId) {
     try {
-      const room: RoomEntity = await RoomEntity.findOne({
-        where: { id: roomId },
-      });
+      const room = await this.roomModel
+        .findByIdAndUpdate(
+          roomId,
+          { $pull: { joinedUsers: { user: userId } } },
+          { new: true },
+        )
+        .exec();
       if (!room) {
         return HttpResponse.notFound('no room found');
       }
-      if (room?.joinedUsers?.length > 0) {
-        const updatedUsers = room.joinedUsers.filter(
-          (user) => user.id !== userId,
-        );
-        room.joinedUsers = updatedUsers;
-        await room.save();
-      }
 
-      return HttpResponse.success<Partial<RoomEntity>>(room.toJSON({}), 'left');
+      return HttpResponse.success(room, 'left');
     } catch (e) {
       return HttpResponse.error(e);
     }
@@ -150,26 +127,31 @@ export default class RoomService {
 
   public async updateQueue(roomId, song, authDetails) {
     try {
-      const room: RoomEntity = await RoomEntity.findOne({
-        where: { id: roomId },
-      });
+      const room = await this.roomModel.findById(roomId).exec();
+
       if (!room) {
         return HttpResponse.notFound('no room found');
       }
-      if (room?.songQueue?.length > 0) {
-        room.songQueue = [...room.songQueue, song];
-      } else {
-        room.songQueue = [song];
-      }
 
-      room.ownerId = authDetails.currentUser.id;
-
-      await room.save();
-
-      return HttpResponse.success<Partial<RoomEntity>>(
-        room.toJSON({}),
-        'joined',
+      const isSongInQueue = room.songQueue.some(
+        (queuedSong) => queuedSong.video_id === song.video_id,
       );
+
+      if (!isSongInQueue) {
+        // Push the new song to the songQueue if it doesn't exist
+        room.songQueue.push({
+          name: song.name,
+          video_id: song.video_id,
+          image_url: song.image_url,
+          isPlaying: song.isPlaying,
+        });
+      }
+      room.owner = authDetails.currentUser.id;
+
+      // Save the updated room
+      const updatedRoom = await room.save();
+
+      return HttpResponse.success(updatedRoom, 'update queue');
     } catch (e) {
       return HttpResponse.error(e);
     }
@@ -177,33 +159,33 @@ export default class RoomService {
 
   public async updateSong(roomId, videoId, currentSong, authDetails) {
     try {
-      const room: RoomEntity = await RoomEntity.findOne({
-        where: { id: roomId },
-      });
+      const room = await this.roomModel.findById(roomId).exec();
+
       if (!room) {
         return HttpResponse.notFound('no room found');
       }
+
+      const son = Array.isArray(room?.songQueue)
+        ? room?.songQueue?.map((q) => ({
+            ...q,
+            isPlaying: q?.video_id === videoId,
+          }))
+        : [];
+
       room.videoId = videoId;
-      room.currentSong = currentSong;
+      room.currentSong = {
+        name: currentSong.name,
+        video_id: currentSong.video_id,
+        image_url: currentSong.image_url,
+      };
+      room.songQueue = son;
+      room.owner = authDetails.currentUser.id;
 
-      const updatedSongQueue = room?.songQueue?.map((q) => {
-        if (q.video_id === videoId) {
-          return { ...q, isPlaying: true };
-        }
-        return { ...q, isPlaying: false };
-      });
+      const updatedRoom = await room.save();
 
-      room.songQueue = updatedSongQueue;
-
-      room.ownerId = authDetails.currentUser.id;
-
-      await room.save();
-
-      return HttpResponse.success<Partial<RoomEntity>>(
-        room.toJSON({}),
-        'joined',
-      );
+      return HttpResponse.success(updatedRoom, 'song update');
     } catch (e) {
+      console.log(e);
       return HttpResponse.error(e);
     }
   }

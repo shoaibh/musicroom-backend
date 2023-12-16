@@ -15,7 +15,7 @@ class AuthenticationGuard implements CanActivate {
   public async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const jwtToken = request.headers['jwttoken'];
-    const user: UserEntity = await this.validateJWTToken(jwtToken);
+    const user = await this.validateJWTToken(jwtToken);
     if (user) {
       request.user = user;
       request.jwtToken = jwtToken;
@@ -24,9 +24,8 @@ class AuthenticationGuard implements CanActivate {
     return false;
   }
 
-  public async validateJWTToken(token: string): Promise<UserEntity> {
-    const vr: HttpResponse<UserEntity> =
-      await this.authService.validateJWTToken(token);
+  public async validateJWTToken(token: string) {
+    const vr = await this.authService.validateJWTToken(token);
     if (vr.success) {
       return vr.data;
     } else {

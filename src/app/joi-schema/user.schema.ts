@@ -28,7 +28,7 @@ const UserLoginSchema = Joi.object<LoginCredentialDto>({
   password: Joi.string().trim().required(),
 });
 
-const IdSchema = Joi.number().required();
+const IdSchema = Joi.string().required();
 
 export {
   UserUpdateSchema,

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import ytdl = require('ytdl-core');
 import HttpResponse from '../libs/http-response';
 import yts = require('yt-search');
-import lf = require('lyrics-finder');
+// import lf = require('lyrics-finder');
 
 @Injectable()
 export default class SongService {
@@ -88,8 +88,8 @@ export default class SongService {
     }
   }
 
-  public async getLyrics({ title = '', artist = '' }) {
-    const lyrics = (await lf(artist, title)) || 'no lyrics found';
-    return HttpResponse.success(lyrics);
-  }
+  // public async getLyrics({ title = '', artist = '' }) {
+  //   const lyrics = (await lf(artist, title)) || 'no lyrics found';
+  //   return HttpResponse.success(lyrics);
+  // }
 }

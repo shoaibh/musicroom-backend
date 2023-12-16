@@ -40,14 +40,14 @@ export default class RoomController {
 
   @Get('/:id')
   @UseGuards(AuthenticationGuard)
-  public async getRoom(@Param('id', Vp.for(IdSchema)) id: number) {
+  public async getRoom(@Param('id', Vp.for(IdSchema)) id: string) {
     const data = await this.roomService.getSingleRoom(id);
     return handleHTTPResponse(data);
   }
 
   @Get('/users/:id')
   @UseGuards(AuthenticationGuard)
-  public async getRoomUsers(@Param('id', Vp.for(IdSchema)) id: number) {
+  public async getRoomUsers(@Param('id', Vp.for(IdSchema)) id: string) {
     const data = await this.roomService.getRoomUsers(id);
     return handleHTTPResponse(data);
   }
@@ -89,7 +89,7 @@ export default class RoomController {
   @Put('/update_song/:roomId')
   @UseGuards(AuthenticationGuard)
   public async updateSong(
-    @Param('roomId', Vp.for(IdSchema)) roomId: number,
+    @Param('roomId', Vp.for(IdSchema)) roomId: string,
     @Body() { videoId, currentSong, song },
     @AuthDetail() authDetails: AuthDetailsDto,
   ) {

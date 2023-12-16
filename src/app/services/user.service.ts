@@ -15,6 +15,9 @@ import * as Bcrypt from 'bcrypt';
 import AuthGlobalService from './auth.service';
 import { AuthDetailsDto } from '../dtos/auth.dto';
 import { isNil } from '@nestjs/common/utils/shared.utils';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User } from 'src/db/schema/user.schema';
 
 const EXPIRE_TIME = 20 * 1000;
 
@@ -23,36 +26,29 @@ export default class UserService {
   constructor(
     private readonly configService: ConfigGlobalService,
     private readonly authService: AuthGlobalService,
+    @InjectModel('User') private userModel: Model<User>,
   ) {}
 
-  public async userSignUp(
-    createUserSchema: UserRegistrationDto,
-  ): Promise<HttpResponse<Partial<UserEntity>>> {
+  public async userSignUp(createUserSchema: UserRegistrationDto) {
     try {
-      const user: UserEntity = await UserEntity.findOne({
-        where: { email: createUserSchema.email.toLowerCase() },
-      });
-      if (user)
+      const userExist = await this.userModel
+        .findOne({ email: createUserSchema.email })
+        .exec();
+      if (userExist)
         return HttpResponse.error(MessagesConst.EMAIL_ALREADY_REGISTERED, {
           httpCode: 400,
         });
       const { name, email, password } = createUserSchema;
-      console.log('==service', { user });
-      const newUser: UserEntity = UserEntity.create({
+      const user = new this.userModel({
         name,
         email,
         passwordHash: Bcrypt.hashSync(password, 10),
       });
-      console.log('==service', { newUser });
-
-      await newUser.save();
-      return HttpResponse.success(
-        newUser.toJSON({}),
-        MessagesConst.SIGN_UP_SUCCESSFUL,
-        201,
-      );
+      await user.save();
+      return HttpResponse.success(user, MessagesConst.SIGN_UP_SUCCESSFUL, 201);
     } catch (e) {
-      return HttpResponse.error(MessagesConst.SIGN_UP_UNSUCCESSFUL);
+      console.log(e);
+      return HttpResponse.error(e);
     }
   }
 
@@ -93,23 +89,29 @@ export default class UserService {
     loginCredentialSchema: LoginCredentialDto,
   ): Promise<HttpResponse<Partial<UserLoginDto>>> {
     try {
-      const user: UserEntity = await UserEntity.findOne({
-        where: { email: loginCredentialSchema.email.toLowerCase() },
-      });
+      const userExist = await this.userModel
+        .findOne({ email: loginCredentialSchema.email.toLowerCase() })
+        .exec();
 
-      if (!user) return HttpResponse.error(MessagesConst.INVALID_CREDENTIALS);
+      if (!userExist)
+        return HttpResponse.error(MessagesConst.INVALID_CREDENTIALS);
       const isMatching = await Bcrypt.compare(
         loginCredentialSchema.password,
-        user.passwordHash,
+        userExist.passwordHash,
       );
 
       if (isMatching) {
-        const token = await this.authService.generateJWTToken(user);
-        const refreshToken = await this.authService.generateRefreshToken(user);
+        const token = await this.authService.generateJWTToken(userExist);
+        const refreshToken =
+          await this.authService.generateRefreshToken(userExist);
 
         const res: Partial<UserLoginDto> = {
           user: {
-            ...user.toJSON({}),
+            id: userExist._id,
+            name: userExist.name,
+            email: userExist?.email,
+            joinedRooms: userExist?.joinedRooms,
+            image: userExist?.image,
           },
           backendTokens: {
             jwt: token,
@@ -150,47 +152,47 @@ export default class UserService {
     );
   }
 
-  public async getAllUsers({
-    page,
-    limit,
-  }): Promise<HttpResponse<Partial<UserEntity>[]>> {
+  public async getAllUsers({ page, limit }) {
     try {
-      const users: UserEntity[] = await UserEntity.find({
-        skip: page * limit,
-        take: limit,
-      });
-      const userData = users.map((user) => user.toJSON({}));
-      return HttpResponse.success<Partial<UserEntity>[]>(userData);
+      const users = await this.userModel
+        .find({})
+        .skip(page * limit)
+        .limit(limit)
+        .exec();
+      return HttpResponse.success(users);
     } catch (e) {
       return HttpResponse.serverError();
     }
   }
 
-  public async getUser(id: number): Promise<HttpResponse<Partial<UserEntity>>> {
-    const user: UserEntity = await UserEntity.findOne({ where: { id } });
-    if (!user) {
+  public async getUser(id: number) {
+    const userExist = await this.userModel.findOne({ id }).exec();
+    if (!userExist) {
       return HttpResponse.notFound(MessagesConst.NO_USER_FOR_THIS_ID);
     }
-    return HttpResponse.success<Partial<UserEntity>>(user.toJSON({}));
+    return HttpResponse.success(userExist);
   }
 
   public async updateUser(
     id: number,
-    currentUser: UserEntity,
+    currentUser,
     updateUserSchema: UserUpdateDto,
   ): Promise<HttpResponse<Partial<UserEntity>>> {
     try {
-      const user: UserEntity = await UserEntity.findOne({ where: { id } });
+      const user = await this.userModel.findOne({ id }).exec();
+
       if (!user) {
         return HttpResponse.notFound(MessagesConst.NO_USER_FOR_THIS_ID);
       }
-      const userWithExistingEmail: UserEntity = await UserEntity.findOne({
-        where: { email: updateUserSchema.email.toLowerCase() },
-      });
-      if (userWithExistingEmail && userWithExistingEmail.id !== id) {
-        return HttpResponse.error(MessagesConst.EMAIL_ALREADY_REGISTERED, {
-          httpCode: 400,
+      if (updateUserSchema.email) {
+        const userWithExistingEmail: UserEntity = await UserEntity.findOne({
+          where: { email: updateUserSchema.email.toLowerCase() },
         });
+        if (userWithExistingEmail && userWithExistingEmail.id !== id) {
+          return HttpResponse.error(MessagesConst.EMAIL_ALREADY_REGISTERED, {
+            httpCode: 400,
+          });
+        }
       }
     } catch (e) {
       return HttpResponse.error(MessagesConst.USER_NOT_UPDATED);

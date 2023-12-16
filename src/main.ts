@@ -13,11 +13,11 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'static'));
   await app.listen(process.env.PORT || 5001);
 
-  osMonitor.start({
-    delay: 30000, // interval in milliseconds
-    freemem: 0.1, // percentage of free memory required
-    critical1: 0.7, // send alert if free memory drops below this threshold
-  });
+  // osMonitor.start({
+  //   delay: 30000, // interval in milliseconds
+  //   freemem: 0.1, // percentage of free memory required
+  //   critical1: 0.7, // send alert if free memory drops below this threshold
+  // });
 
   // osMonitor.on('monitor', (event) => {
   //   console.log('Memory Usage:', event);

@@ -4,6 +4,7 @@ export interface UserUpdateDto {
   name: string;
   email: string;
   password: string;
+  joinedRoom: any;
 }
 
 export interface LoginCredentialDto {
@@ -17,7 +18,7 @@ export interface UserDto {
 }
 
 export interface UserLoginDto {
-  user: Partial<UserEntity>;
+  user: any;
   backendTokens: {
     jwt: string;
     refreshToken: string;
