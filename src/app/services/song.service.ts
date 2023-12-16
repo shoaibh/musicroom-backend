@@ -57,10 +57,16 @@ export default class SongService {
 
   public async searchSong({ searchQuery }) {
     try {
-      const r = await yts(searchQuery);
-      const videos = r.all.slice(0, 4);
+      const r = await yts({
+        search: searchQuery,
+        pageStart: 0,
+        pageEnd: 10,
+        category: 'music',
+      });
+      const videos = r.videos;
       return HttpResponse.success(videos);
     } catch (e) {
+      console.log(e);
       return HttpResponse.error('No Videos Found');
     }
   }
