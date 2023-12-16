@@ -39,6 +39,7 @@ import RefreshGuard from '../guards/refresh.guard';
 import { editFileName, imageFileFilter } from '../libs/file-upload';
 import { FileInterceptor } from '@nestjs/platform-express';
 import multer from 'multer';
+import { RecaptchaGuard } from '../guards/recaptch.guard';
 
 // image.controller.ts
 
@@ -68,6 +69,7 @@ export default class UserController {
 
   @Post('/login')
   @HttpCode(200)
+  @UseGuards(RecaptchaGuard)
   public async login(
     @Body(Vp.for(UserLoginSchema))
     userCredentials: LoginCredentialDto,
@@ -96,6 +98,7 @@ export default class UserController {
 
   @Post('/signup')
   @HttpCode(201)
+  @UseGuards(RecaptchaGuard)
   public async signup(
     @Body(Vp.for(UserRegistrationSchema)) user: UserRegistrationDto,
   ) {

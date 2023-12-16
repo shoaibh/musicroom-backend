@@ -16,6 +16,7 @@ const UserRegistrationSchema = Joi.object<UserRegistrationDto>({
   email: Joi.string().trim().email().required(),
   password: Joi.string().trim().min(3).required(),
   image_url: Joi.string(),
+  recaptchaValue: Joi.string().required(),
 });
 
 const UserWithRoleSchema = Joi.object<UserRegistrationDto>({
@@ -27,6 +28,7 @@ const UserWithRoleSchema = Joi.object<UserRegistrationDto>({
 const UserLoginSchema = Joi.object<LoginCredentialDto>({
   email: Joi.string().trim().email().required(),
   password: Joi.string().trim().required(),
+  recaptchaValue: Joi.string().required(),
 });
 
 const IdSchema = Joi.string().required();

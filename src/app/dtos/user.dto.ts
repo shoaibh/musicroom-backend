@@ -10,6 +10,7 @@ export interface UserUpdateDto {
 export interface LoginCredentialDto {
   email: string;
   password: string;
+  recaptchaValue: string;
 }
 
 export interface UserDto {
@@ -30,6 +31,7 @@ export interface UserRegistrationDto {
   email: string;
   password: string;
   image_url?: string;
+  recaptchaValue: string;
 }
 
 export interface UserOAuthDto {

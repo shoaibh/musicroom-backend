@@ -3,6 +3,7 @@ import { AppModule } from './app/app.module';
 import { config } from 'dotenv';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import { rateLimiterMiddleware } from './app/middleware/rate-limiting';
 const osMonitor = require('os-monitor');
 
 config();
@@ -12,6 +13,8 @@ async function bootstrap() {
   app.enableCors();
   app.useStaticAssets(join(__dirname, '..', 'static'));
   await app.listen(process.env.PORT || 5001);
+
+  app.use(rateLimiterMiddleware);
 
   // osMonitor.start({
   //   delay: 30000, // interval in milliseconds
