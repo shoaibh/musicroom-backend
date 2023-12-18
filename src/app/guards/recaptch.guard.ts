@@ -5,17 +5,19 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import axios from 'axios';
+import ConfigGlobalService from '../services/config.service';
 
 @Injectable()
 export class RecaptchaGuard implements CanActivate {
-  constructor() {}
+  constructor(private readonly configService: ConfigGlobalService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const { body } = context.switchToHttp().getRequest();
 
-    console.log('==', { body });
     const { data } = await axios.post(
-      `https://www.google.com/recaptcha/api/siteverify?response=${body.recaptchaValue}&secret=6LeHwTMpAAAAALCOSkGxgdj06vSq-Tv_kZjyC3He`,
+      `https://www.google.com/recaptcha/api/siteverify?response=${
+        body.recaptchaValue
+      }&secret=${this.configService.get('RECAPTCHA_SECRET')}`,
     );
 
     if (!data.success) {

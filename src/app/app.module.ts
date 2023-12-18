@@ -13,15 +13,16 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://admin:admin@0.0.0.0:27017/', {
-      dbName: 'musicroom',
-    }),
-    // MongooseModule.forRootAsync({
-    //   useFactory: (config: ConfigGlobalService) => ({
-    //     uri: config.get('MONGODB_URI'),
-    //   }),
-    //   inject: [ConfigGlobalService],
+    // MongooseModule.forRoot('mongodb://admin:admin@0.0.0.0:27017/', {
+    //   dbName: 'musicroom',
     // }),
+    MongooseModule.forRootAsync({
+      useFactory: (config: ConfigGlobalService) => ({
+        uri: config.get('MONGODB_URI'),
+        dbName: 'musicroom',
+      }),
+      inject: [ConfigGlobalService],
+    }),
     GlobalModule,
     UserModule,
     RoomModule,
