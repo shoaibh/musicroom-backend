@@ -116,6 +116,15 @@ export default class UserController {
     return handleHTTPResponse(data);
   }
 
+  @Post('/oauth/getJwt')
+  @HttpCode(201)
+  public async oAuthJwt(
+    @Body() user: UserOAuthDto,
+  ): Promise<HttpResponse<Partial<UserEntity>>> {
+    const data = await this.userService.userOAuth(user);
+    return handleHTTPResponse(data);
+  }
+
   @Post('/')
   @UseGuards(AuthenticationGuard)
   public async createUserWithRole(

@@ -53,35 +53,58 @@ export default class UserService {
     }
   }
 
-  public async userOAuth(
-    userOAuthDetail: UserOAuthDto,
-  ): Promise<HttpResponse<Partial<UserEntity>>> {
+  public async userOAuth(userOAuthDetail: UserOAuthDto) {
     try {
-      const user: UserEntity = await UserEntity.findOne({
-        where: { email: userOAuthDetail.email.toLowerCase() },
-      });
-      if (user)
-        return HttpResponse.success(
-          user.toJSON({}),
-          MessagesConst.LOGIN_SUCCESSFUL,
-          200,
-        );
+      const userExist = await this.userModel
+        .findOne({ email: userOAuthDetail.email.toLowerCase() })
+        .exec();
+      if (userExist) {
+        const token = await this.authService.generateJWTToken(userExist);
+        const res: Partial<UserLoginDto> = {
+          user: {
+            id: userExist._id,
+            name: userExist.name,
+            email: userExist?.email,
+            joinedRooms: userExist?.joinedRooms,
+            image: userExist?.image,
+          },
+          backendTokens: {
+            jwt: token,
+            refreshToken: '',
+            expiresIn: new Date().setTime(new Date().getTime() + EXPIRE_TIME),
+          },
+        };
+        return HttpResponse.success(res, 'user exist', 200);
+      }
       const { name, email, image, oAuthId } = userOAuthDetail;
 
-      const newUser: UserEntity = UserEntity.create({
+      const newUser = new this.userModel({
         name,
         email,
         image,
         oAuthId,
       });
 
+      const token = await this.authService.generateJWTToken(newUser);
+
+      const res: Partial<UserLoginDto> = {
+        user: {
+          id: newUser._id,
+          name: newUser.name,
+          email: newUser?.email,
+          joinedRooms: newUser?.joinedRooms,
+          image: newUser?.image,
+        },
+        backendTokens: {
+          jwt: token,
+          refreshToken: '',
+          expiresIn: new Date().setTime(new Date().getTime() + EXPIRE_TIME),
+        },
+      };
       await newUser.save();
-      return HttpResponse.success(
-        newUser.toJSON({}),
-        MessagesConst.SIGN_UP_SUCCESSFUL,
-        201,
-      );
+      return HttpResponse.success(res, MessagesConst.SIGN_UP_SUCCESSFUL, 201);
     } catch (e) {
+      console.log(e);
       return HttpResponse.error(MessagesConst.SIGN_UP_UNSUCCESSFUL);
     }
   }

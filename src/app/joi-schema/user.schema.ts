@@ -14,7 +14,7 @@ const UserUpdateSchema = Joi.object<UserUpdateDto>({
 const UserRegistrationSchema = Joi.object<UserRegistrationDto>({
   name: Joi.string().trim().min(3).max(20).required(),
   email: Joi.string().trim().email().required(),
-  password: Joi.string().trim().min(3).required(),
+  password: Joi.string().trim().min(8).required(),
   image_url: Joi.string(),
   recaptchaValue: Joi.string().required(),
 });

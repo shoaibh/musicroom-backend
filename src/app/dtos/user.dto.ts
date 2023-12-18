@@ -36,7 +36,7 @@ export interface UserRegistrationDto {
 
 export interface UserOAuthDto {
   name: string;
-  email: string;
-  image: string;
-  oAuthId: string;
+  email?: string;
+  image?: string;
+  oAuthId?: string;
 }
