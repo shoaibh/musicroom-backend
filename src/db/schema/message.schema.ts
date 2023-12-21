@@ -6,10 +6,10 @@ export type MessageDocument = HydratedDocument<Message>;
 @Schema({ timestamps: { createdAt: true, updatedAt: true } })
 export class Message {
   @Prop({ required: true })
-  message: string;
-
-  @Prop({ type: Types.ObjectId, ref: 'User' })
-  sender: Types.ObjectId;
+  messages: Array<{
+    sender: Types.ObjectId;
+    createdAt: Date;
+  }>;
 
   @Prop({ type: Types.ObjectId, ref: 'Room' })
   room: Types.ObjectId;

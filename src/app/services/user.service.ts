@@ -153,6 +153,7 @@ export default class UserService {
         httpCode: 400,
       });
     } catch (e) {
+      console.log(e);
       return HttpResponse.error(MessagesConst.LOGIN_UNSUCCESSFUL);
     }
   }
