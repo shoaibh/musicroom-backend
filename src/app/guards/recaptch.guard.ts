@@ -20,6 +20,8 @@ export class RecaptchaGuard implements CanActivate {
       }&secret=${this.configService.get('RECAPTCHA_SECRET')}`,
     );
 
+    console.log('==', { data });
+
     if (!data.success) {
       throw new ForbiddenException();
     }

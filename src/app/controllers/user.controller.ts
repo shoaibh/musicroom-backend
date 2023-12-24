@@ -74,6 +74,7 @@ export default class UserController {
     @Body(Vp.for(UserLoginSchema))
     userCredentials: LoginCredentialDto,
   ): Promise<HttpResponse<Partial<UserLoginDto>>> {
+    console.log('==', { userCredentials });
     const data = await this.userService.userLogin(userCredentials);
     return handleHTTPResponse(data);
   }
