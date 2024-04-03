@@ -30,7 +30,7 @@
     "seed:fake": "ts-node src/db/seeds/fake.seed.runner.ts"
   },
   "engines": {
-    "node": "12.16.3"
+    "node": "16.5.x"
   },
   "jest": {
     "moduleFileExtensions": [
