@@ -1,25 +1,20 @@
-import { Injectable } from '@nestjs/common';
-import HttpResponse from '../libs/http-response';
+import { Injectable } from "@nestjs/common";
+import HttpResponse from "../libs/http-response";
 // @ts-ignore
-import MessagesConst from '../constants/messages.constants';
-import ConfigGlobalService from './config.service';
-import AuthGlobalService from './auth.service';
-import RoomEntity from '../../db/entities/room.entity';
-import { AuthDetailsDto } from '../dtos/auth.dto';
-import UserEntity from 'src/db/entities/user.entity';
-import UserService from './user.service';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Room } from 'src/db/schema/room.schema';
+import MessagesConst from "../constants/messages.constants";
+import ConfigGlobalService from "./config.service";
+import AuthGlobalService from "./auth.service";
+import RoomEntity from "../../db/entities/room.entity";
+import { AuthDetailsDto } from "../dtos/auth.dto";
+import UserEntity from "src/db/entities/user.entity";
+import UserService from "./user.service";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { Room } from "src/db/schema/room.schema";
 
 @Injectable()
 export default class RoomService {
-  constructor(
-    private readonly configService: ConfigGlobalService,
-    private readonly authService: AuthGlobalService,
-    private readonly userService: UserService,
-    @InjectModel('Room') private roomModel: Model<Room>,
-  ) {}
+  constructor(@InjectModel("Room") private roomModel: Model<Room>) {}
 
   public async createRoom(authDetails, roomData) {
     try {
@@ -29,7 +24,7 @@ export default class RoomService {
         owner: authDetails.currentUser.id,
       });
       await room.save();
-      return HttpResponse.success(room, 'room created', 201);
+      return HttpResponse.success(room, "room created", 201);
     } catch (e) {
       return HttpResponse.error(MessagesConst.SIGN_UP_UNSUCCESSFUL);
     }
@@ -39,8 +34,8 @@ export default class RoomService {
     try {
       const rooms = await this.roomModel
         .find()
-        .sort({ createdAt: 'desc' })
-        .populate('owner') // Assuming 'owner' is the field name representing the relationship
+        .sort({ createdAt: "desc" })
+        .populate("owner") // Assuming 'owner' is the field name representing the relationship
         .exec();
 
       const sortedRooms = rooms.sort((a, b) => {
@@ -48,20 +43,13 @@ export default class RoomService {
         const isUserRoomB = b.owner._id === authDetails.currentUser.id;
 
         if (isUserRoomA && !isUserRoomB) {
-          return -1; // Room A is owned by the user, should come first
+          return -1;
         } else if (!isUserRoomA && isUserRoomB) {
-          return 1; // Room B is owned by the user, should come first
+          return 1;
         } else {
           return b.createdAt.getTime() - a.createdAt.getTime();
-          // Sort by createdAt in descending order for other rooms
         }
       });
-      // const roomData = sortedRooms.map((room) =>
-      //   room.toAsyncJSON({ userId: authDetails.currentUser.id }),
-      // );
-      // return HttpResponse.success<Partial<RoomEntity>[]>(
-      //   await Promise.all(roomData),
-      // );
       return HttpResponse.success(sortedRooms);
     } catch (e) {
       console.log(e);
@@ -70,7 +58,7 @@ export default class RoomService {
   }
 
   public async getSingleRoom(id: string) {
-    const room = await this.roomModel.findById(id).populate('owner').exec();
+    const room = await this.roomModel.findById(id).populate("owner").exec();
     if (!room) {
       return HttpResponse.notFound(MessagesConst.NO_USER_FOR_THIS_ID);
     }
@@ -78,10 +66,7 @@ export default class RoomService {
   }
 
   public async getRoomUsers(id: string) {
-    const room = await this.roomModel
-      .findById(id)
-      .populate('joinedUsers.user')
-      .exec();
+    const room = await this.roomModel.findById(id).populate("joinedUsers.user").exec();
     if (!room) {
       return HttpResponse.notFound(MessagesConst.NO_USER_FOR_THIS_ID);
     }
@@ -90,17 +75,11 @@ export default class RoomService {
 
   public async joinRoom(userId, roomId) {
     try {
-      const room = await this.roomModel
-        .findByIdAndUpdate(
-          roomId,
-          { $addToSet: { joinedUsers: { user: userId } } },
-          { new: true },
-        )
-        .exec();
+      const room = await this.roomModel.findByIdAndUpdate(roomId, { $addToSet: { joinedUsers: { user: userId } } }, { new: true }).exec();
       if (!room) {
-        return HttpResponse.notFound('no room found');
+        return HttpResponse.notFound("no room found");
       }
-      return HttpResponse.success(room, 'joined');
+      return HttpResponse.success(room, "joined");
     } catch (e) {
       return HttpResponse.error(e);
     }
@@ -108,18 +87,12 @@ export default class RoomService {
 
   public async leaveRoom(userId, roomId) {
     try {
-      const room = await this.roomModel
-        .findByIdAndUpdate(
-          roomId,
-          { $pull: { joinedUsers: { user: userId } } },
-          { new: true },
-        )
-        .exec();
+      const room = await this.roomModel.findByIdAndUpdate(roomId, { $pull: { joinedUsers: { user: userId } } }, { new: true }).exec();
       if (!room) {
-        return HttpResponse.notFound('no room found');
+        return HttpResponse.notFound("no room found");
       }
 
-      return HttpResponse.success(room, 'left');
+      return HttpResponse.success(room, "left");
     } catch (e) {
       return HttpResponse.error(e);
     }
@@ -130,12 +103,10 @@ export default class RoomService {
       const room = await this.roomModel.findById(roomId).exec();
 
       if (!room) {
-        return HttpResponse.notFound('no room found');
+        return HttpResponse.notFound("no room found");
       }
 
-      const isSongInQueue = room.songQueue.some(
-        (queuedSong) => queuedSong.video_id === song.video_id,
-      );
+      const isSongInQueue = room.songQueue.some((queuedSong) => queuedSong.video_id === song.video_id);
 
       if (!isSongInQueue) {
         // Push the new song to the songQueue if it doesn't exist
@@ -151,7 +122,7 @@ export default class RoomService {
       // Save the updated room
       const updatedRoom = await room.save();
 
-      return HttpResponse.success(updatedRoom, 'update queue');
+      return HttpResponse.success(updatedRoom, "update queue");
     } catch (e) {
       return HttpResponse.error(e);
     }
@@ -162,11 +133,11 @@ export default class RoomService {
       const room = await this.roomModel.findById(roomId).exec();
 
       if (!room) {
-        return HttpResponse.notFound('no room found');
+        return HttpResponse.notFound("no room found");
       }
 
       if (String(room.owner) !== String(authDetails.currentUser._id)) {
-        return HttpResponse.notFound('only owners can play song');
+        return HttpResponse.notFound("only owners can play song");
       }
 
       const son = Array.isArray(room?.songQueue)
@@ -187,16 +158,10 @@ export default class RoomService {
 
       const updatedRoom = await room.save();
 
-      return HttpResponse.success(updatedRoom, 'song update');
+      return HttpResponse.success(updatedRoom, "song update");
     } catch (e) {
       console.log(e);
       return HttpResponse.error(e);
     }
   }
 }
-
-// const ownerId = room.ownerId;
-
-// console.log('==', { room, song, ownerId });
-// await room.save();
-// room.ownerId = ownerId;

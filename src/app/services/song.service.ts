@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import ytdl = require('ytdl-core');
-import HttpResponse from '../libs/http-response';
-import yts = require('yt-search');
-// import lf = require('lyrics-finder');
+import { Injectable } from "@nestjs/common";
+import HttpResponse from "../libs/http-response";
+import ytdl = require("ytdl-core");
+import yts = require("yt-search");
 
 @Injectable()
 export default class SongService {
@@ -24,32 +23,10 @@ export default class SongService {
     }
     const videoInfo = await ytdl.getInfo(videoId);
     const audioFormat = ytdl.chooseFormat(videoInfo.formats, {
-      filter: 'audioonly',
-      quality: 'highestaudio',
+      filter: "audioonly",
+      quality: "highestaudio",
     });
 
-    // console.log('==', { format: audioFormat });
-
-    // const { itag, container, contentLength } = audioFormat;
-
-    // const rangePosition = rangeHeader
-    //   ? rangeHeader.replace(/bytes=/, '').split('-')
-    //   : null;
-
-    // const startRange = rangePosition ? parseInt(rangePosition[0], 10) : 0;
-    // let endRange: number;
-    // if (rangePosition && rangePosition[1].length > 0) {
-    //   endRange = parseInt(rangePosition[1], 10);
-    // } else {
-    //   // @ts-ignore
-    //   endRange = contentLength - 1;
-    // }
-    // const chunksize = endRange - startRange + 1;
-    // const range = { start: startRange, end: endRange };
-    // const audioStream = ytdl(videoId, {
-    //   filter: (format) => format.itag === itag,
-    //   range,
-    // });
     return HttpResponse.success({
       audioUrl: audioFormat?.url,
     });
@@ -61,13 +38,13 @@ export default class SongService {
         search: searchQuery,
         pageStart: 0,
         pageEnd: 10,
-        category: 'music',
+        category: "music",
       });
       const videos = r.videos;
       return HttpResponse.success(videos);
     } catch (e) {
       console.log(e);
-      return HttpResponse.error('No Videos Found');
+      return HttpResponse.error("No Videos Found");
     }
   }
 
@@ -77,25 +54,18 @@ export default class SongService {
       if (!isValid) {
         return HttpResponse.notFound();
       }
-      // console.log('==', { id });
       const videoInfo = await ytdl.getInfo(id);
-      // console.log('==', { videoInfo: videoInfo?.videoDetails?.author });
 
       const audioFormat = ytdl.chooseFormat(videoInfo.formats, {
-        filter: 'audioonly',
-        quality: 'highestaudio',
+        filter: "audioonly",
+        quality: "highestaudio",
       });
       return HttpResponse.success({
         ...videoInfo.videoDetails,
         audioUrl: audioFormat?.url,
       });
     } catch (e) {
-      return HttpResponse.error('No video for this id');
+      return HttpResponse.error("No video for this id");
     }
   }
-
-  // public async getLyrics({ title = '', artist = '' }) {
-  //   const lyrics = (await lf(artist, title)) || 'no lyrics found';
-  //   return HttpResponse.success(lyrics);
-  // }
 }

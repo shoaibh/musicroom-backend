@@ -1,23 +1,17 @@
-import { Injectable } from '@nestjs/common';
-import UserEntity from '../../db/entities/user.entity';
-import HttpResponse from '../libs/http-response';
+import { Injectable } from "@nestjs/common";
+import UserEntity from "../../db/entities/user.entity";
+import HttpResponse from "../libs/http-response";
 // @ts-ignore
-import MessagesConst from '../constants/messages.constants';
-import {
-  LoginCredentialDto,
-  UserLoginDto,
-  UserOAuthDto,
-  UserRegistrationDto,
-  UserUpdateDto,
-} from '../dtos/user.dto';
-import ConfigGlobalService from './config.service';
-import * as Bcrypt from 'bcrypt';
-import AuthGlobalService from './auth.service';
-import { AuthDetailsDto } from '../dtos/auth.dto';
-import { isNil } from '@nestjs/common/utils/shared.utils';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User } from 'src/db/schema/user.schema';
+import MessagesConst from "../constants/messages.constants";
+import { LoginCredentialDto, UserLoginDto, UserOAuthDto, UserRegistrationDto, UserUpdateDto } from "../dtos/user.dto";
+import ConfigGlobalService from "./config.service";
+import * as Bcrypt from "bcrypt";
+import AuthGlobalService from "./auth.service";
+import { AuthDetailsDto } from "../dtos/auth.dto";
+import { isNil } from "@nestjs/common/utils/shared.utils";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { User } from "src/db/schema/user.schema";
 
 const EXPIRE_TIME = 20 * 1000;
 
@@ -26,14 +20,12 @@ export default class UserService {
   constructor(
     private readonly configService: ConfigGlobalService,
     private readonly authService: AuthGlobalService,
-    @InjectModel('User') private userModel: Model<User>,
+    @InjectModel("User") private userModel: Model<User>,
   ) {}
 
   public async userSignUp(createUserSchema: UserRegistrationDto) {
     try {
-      const userExist = await this.userModel
-        .findOne({ email: createUserSchema.email })
-        .exec();
+      const userExist = await this.userModel.findOne({ email: createUserSchema.email }).exec();
       if (userExist)
         return HttpResponse.error(MessagesConst.EMAIL_ALREADY_REGISTERED, {
           httpCode: 400,
@@ -55,9 +47,7 @@ export default class UserService {
 
   public async userOAuth(userOAuthDetail: UserOAuthDto) {
     try {
-      const userExist = await this.userModel
-        .findOne({ email: userOAuthDetail.email.toLowerCase() })
-        .exec();
+      const userExist = await this.userModel.findOne({ email: userOAuthDetail.email.toLowerCase() }).exec();
       if (userExist) {
         const token = await this.authService.generateJWTToken(userExist);
         const res: Partial<UserLoginDto> = {
@@ -70,11 +60,11 @@ export default class UserService {
           },
           backendTokens: {
             jwt: token,
-            refreshToken: '',
+            refreshToken: "",
             expiresIn: new Date().setTime(new Date().getTime() + EXPIRE_TIME),
           },
         };
-        return HttpResponse.success(res, 'user exist', 200);
+        return HttpResponse.success(res, "user exist", 200);
       }
       const { name, email, image, oAuthId } = userOAuthDetail;
 
@@ -97,7 +87,7 @@ export default class UserService {
         },
         backendTokens: {
           jwt: token,
-          refreshToken: '',
+          refreshToken: "",
           expiresIn: new Date().setTime(new Date().getTime() + EXPIRE_TIME),
         },
       };
@@ -109,25 +99,16 @@ export default class UserService {
     }
   }
 
-  public async userLogin(
-    loginCredentialSchema: LoginCredentialDto,
-  ): Promise<HttpResponse<Partial<UserLoginDto>>> {
+  public async userLogin(loginCredentialSchema: LoginCredentialDto): Promise<HttpResponse<Partial<UserLoginDto>>> {
     try {
-      const userExist = await this.userModel
-        .findOne({ email: loginCredentialSchema.email.toLowerCase() })
-        .exec();
+      const userExist = await this.userModel.findOne({ email: loginCredentialSchema.email.toLowerCase() }).exec();
 
-      if (!userExist)
-        return HttpResponse.error(MessagesConst.INVALID_CREDENTIALS);
-      const isMatching = await Bcrypt.compare(
-        loginCredentialSchema.password,
-        userExist.passwordHash,
-      );
+      if (!userExist) return HttpResponse.error(MessagesConst.INVALID_CREDENTIALS);
+      const isMatching = await Bcrypt.compare(loginCredentialSchema.password, userExist.passwordHash);
 
       if (isMatching) {
         const token = await this.authService.generateJWTToken(userExist);
-        const refreshToken =
-          await this.authService.generateRefreshToken(userExist);
+        const refreshToken = await this.authService.generateRefreshToken(userExist);
 
         const res: Partial<UserLoginDto> = {
           user: {
@@ -144,10 +125,7 @@ export default class UserService {
           },
         };
 
-        return HttpResponse.success<Partial<UserLoginDto>>(
-          res,
-          MessagesConst.LOGGED_IN_SUCCESSFULLY,
-        );
+        return HttpResponse.success<Partial<UserLoginDto>>(res, MessagesConst.LOGGED_IN_SUCCESSFULLY);
       }
       return HttpResponse.error(MessagesConst.INVALID_CREDENTIALS, {
         httpCode: 400,
@@ -198,11 +176,7 @@ export default class UserService {
     return HttpResponse.success(userExist);
   }
 
-  public async updateUser(
-    id: number,
-    currentUser,
-    updateUserSchema: UserUpdateDto,
-  ): Promise<HttpResponse<Partial<UserEntity>>> {
+  public async updateUser(id: number, currentUser, updateUserSchema: UserUpdateDto): Promise<HttpResponse<Partial<UserEntity>>> {
     try {
       const user = await this.userModel.findOne({ id }).exec();
 
@@ -231,21 +205,13 @@ export default class UserService {
         return HttpResponse.notFound(MessagesConst.NO_USER_FOR_THIS_ID);
       }
       await user.remove();
-      return HttpResponse.success<string>(
-        '',
-        MessagesConst.USER_DELETED_SUCCESSFULLY,
-      );
+      return HttpResponse.success<string>("", MessagesConst.USER_DELETED_SUCCESSFULLY);
     } catch (e) {
       return HttpResponse.error(MessagesConst.USER_NOT_DELETED_SUCCESSFULLY);
     }
   }
 
-  public async logout(
-    authDetails: AuthDetailsDto,
-  ): Promise<HttpResponse<string>> {
-    return HttpResponse.success<string>(
-      '',
-      MessagesConst.LOGGED_OUT_SUCCESSFULLY,
-    );
+  public async logout(authDetails: AuthDetailsDto): Promise<HttpResponse<string>> {
+    return HttpResponse.success<string>("", MessagesConst.LOGGED_OUT_SUCCESSFULLY);
   }
 }
