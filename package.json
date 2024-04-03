@@ -30,7 +30,7 @@
     "seed:fake": "ts-node src/db/seeds/fake.seed.runner.ts"
   },
   "engines": {
-    "node": "16.5.x"
+    "node": "20.1.0"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -58,6 +58,7 @@
     "@nestjs/platform-socket.io": "^10.2.10",
     "@nestjs/typeorm": "^10.0.1",
     "@nestjs/websockets": "^10.2.10",
+    "@types/node": "^20.12.3",
     "axios": "^1.6.2",
     "bcrypt": "^5.1.1",
     "class-validator": "^0.14.0",
@@ -71,7 +72,7 @@
     "mongoose": "^8.0.3",
     "reflect-metadata": "^0.1.14",
     "rimraf": "^5.0.5",
-    "socket.io": "^4.7.2",
+    "socket.io": "^4.6.0",
     "ts-node": "^10.9.2",
     "tsc-watch": "^6.0.4",
     "typeorm": "^0.3.17",
